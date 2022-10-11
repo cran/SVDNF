@@ -1,0 +1,11 @@
+export(DNF)
+export(DNFOptim)
+export(DNFPlot)
+export(modelSim)
+import(Rcpp)
+importFrom("stats", "dnorm", "dpois", "dunif", "pgamma", "pnorm", "dbinom",
+               "rexp", "rnorm", "rpois", "rbinom", "rgamma", "optim")
+importFrom("graphics", "plot", "points")
+importFrom("methods", "formalArgs")
+useDynLib(SVDNF, .registration = TRUE)
+
