@@ -14,11 +14,7 @@
 #   	- d_probs : A N*N*K*(R+1) x t matrix containing the product of the probabilities in Equation (2)
 #                 to be multiplied by the previous time's filtering distribution.
 
-probCalculator <- function(grids, R = 1, N = 50, K = 20, data, rho, rho_z, nu, alpha, delta,
-                           mu_x, mu_y, sigma_x, sigma_y,
-                           jump_dist,
-                           mu_x_params, mu_y_params, sigma_x_params, sigma_y_params,
-                           jump_params) {
+probCalculator <- function(grids, R = 1, N = 50, K = 20, data, dynamics) {
   var_mid_points <- grids$var_mid_points
   j_nums <- grids$j_nums
   jump_mid_points <- grids$jump_mid_points
@@ -39,17 +35,17 @@ probCalculator <- function(grids, R = 1, N = 50, K = 20, data, rho, rho_z, nu, a
   j_nums <- unlist(NNKR_grid[, 4])
 
   # Evaluating the drift/diffusion at the mid points
-  mu_y_eval <- do.call(mu_y, c(list(x_tmin1), mu_y_params))
-  mu_x_eval <- do.call(mu_x, c(list(x_tmin1), mu_x_params))
+  mu_y_eval <- do.call(dynamics$mu_y, c(list(x_tmin1), dynamics$mu_y_params))
+  mu_x_eval <- do.call(dynamics$mu_x, c(list(x_tmin1), dynamics$mu_x_params))
 
-  sigma_y_eval <- do.call(sigma_y, c(list(x_tmin1), sigma_y_params))
-  sigma_x_eval <- do.call(sigma_x, c(list(x_tmin1), sigma_x_params))
+  sigma_y_eval <- do.call(dynamics$sigma_y, c(list(x_tmin1), dynamics$sigma_y_params))
+  sigma_x_eval <- do.call(dynamics$sigma_x, c(list(x_tmin1), dynamics$sigma_x_params))
 
   # Mean and variance of y conditional on the latent factors
   eps <- (x_t - mu_x_eval - j_mt) / (sigma_x_eval)
 
-  mus <- mu_y_eval + rho * sigma_y_eval * eps + alpha * j_nums + rho_z * j_mt
-  sigmas <- sqrt((1 - rho^2) * (sigma_y_eval^2) + j_nums * delta^2)
+  mus <- mu_y_eval + dynamics$rho * sigma_y_eval * eps + dynamics$alpha * j_nums + dynamics$rho_z * j_mt
+  sigmas <- sqrt((1 - dynamics$rho^2) * (sigma_y_eval^2) + j_nums * dynamics$delta^2)
   # Mean and variance of x_t given x_t_min1, j_t^x, and n_t
   mu_v <- mu_x_eval + j_mt
   sig_v <- sigma_x_eval
@@ -61,12 +57,12 @@ probCalculator <- function(grids, R = 1, N = 50, K = 20, data, rho, rho_z, nu, a
 
   if (any(j_nums != 0)) { # If there are no jumps, leave jump_mat = 1.
     # Probability of having j_nums jumps
-    p_n <- do.call(jump_dist, c(list(j_nums), jump_params))
+    p_n <- do.call(dynamics$jump_density, c(list(j_nums), dynamics$jump_params))
   }
 
   if (any(jump_mid_points != 0)) {
     # Proability of having jumps of certain size within the jump interval grid.
-    q_j <- pgamma(jump_intervals[findInterval(j_mt, vec = jump_intervals) + 1], shape = j_nums, scale = nu) - pgamma(jump_intervals[findInterval(j_mt, vec = jump_intervals)], shape = j_nums, scale = nu)
+    q_j <- pgamma(jump_intervals[findInterval(j_mt, vec = jump_intervals) + 1], shape = j_nums, scale = dynamics$nu) - pgamma(jump_intervals[findInterval(j_mt, vec = jump_intervals)], shape = j_nums, scale = dynamics$nu)
   }
   jump_mat <- p_n * q_j
 

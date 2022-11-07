@@ -11,67 +11,104 @@
 #              the nodes for the number of jumps, j_nums, and
 #              the volatility jump size nodes, jump_mid_points.
 
-gridMaker <- function(R = 1, N = 50, K = 20, mu = 0.038, kappa = 3.689, theta = 0.032,
-                      sigma = 0.446, rho = -0.745, omega = 5.125, delta = 0.003, alpha = -0.014,
-                      rho_z = -1.809, nu = 0.004, p = 0.01, phi = 0.965,
-                      h = 1 / 252, model) {
-  # Model from Duffie, Pan, and Singleton (2000):
-  if (model == "DuffiePanSingleton") {
-    var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), length = N)^2
-    j_nums <- seq(from = 0, to = R, by = 1)
-    jump_mid_points <- seq(from = 0.000001, to = (3 + log(K)) * sqrt(R) * nu, length = K)
-  }
-  # Model from Bates (1996):
-  if (model == "Bates") {
-    var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.15)), length = N)^2
-    j_nums <- seq(from = 0, to = R, by = 1)
-    jump_mid_points <- 0
-  }
+gridMaker <- function(model_dynamics, ...) UseMethod("gridMaker") 
 
-  # Model from Heston (1993):
-  if (model == "Heston") {
-    var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.15)), length = N)^2
-    j_nums <- 0
-    jump_mid_points <- 0
-  }
-
-  # Model from Pitt, Malik, and Doucet (2014)
-  if (model == "PittMalikDoucet") {
-    mean <- theta
-    sd <- sqrt((sigma^2) / (1 - phi^2))
-    # One node point at the mean and floor(N/2) points on each side
-    var_mid_points <- seq(from = 0, to = sqrt((3 + log(N)) * sd), length = floor(N / 2 + 1))^2
-    # Pick the first N points (or else some grids generated this way have N+1 points)
-    var_mid_points <- (sort(c(-var_mid_points[2:N], var_mid_points)) + mean)[1:N]
-    j_nums <- seq(from = 0, to = 1, by = 1)
-    jump_mid_points <- 0
-  }
-
-  # Model of  Taylor (1986) with leverage effect
-  if (model == "TaylorWithLeverage") {
-    mean <- theta
-    sd <- sqrt((sigma^2) / (1 - phi^2))
-
-    # One node point at the mean and floor(N/2) points on each side
-    var_mid_points <- seq(from = 0, to = sqrt((3 + log(N)) * sd), length = floor(N / 2 + 1))^2
-    # Pick the first N points (or else some grids generated this way have N+1 points)
-    var_mid_points <- (sort(c(-var_mid_points[2:N], var_mid_points)) + mean)[1:N]
-    j_nums <- 0
-    jump_mid_points <- 0
-  }
-
-  # Model of  Taylor (1986)
-  if (model == "Taylor") {
-    mean <- theta
-    sd <- sqrt((sigma^2) / (1 - phi^2))
-
-    # One node point at the mean and floor(N/2) points on each side
-    var_mid_points <- seq(from = 0, to = sqrt((3 + log(N)) * sd), length = floor(N / 2 + 1))^2
-    # Pick the first N points (or else some grids generated this way have N+1 points)
-    var_mid_points <- (sort(c(-var_mid_points[2:N], var_mid_points)) + mean)[1:N]
-    j_nums <- 0
-    jump_mid_points <- 0
-  }
-
+gridMaker.default <- function(model_dynamics, ...){
+  stop("Please select a built-in model or input your own grid to the DNF")
+}
+# Model from Duffie, Pan, and Singleton (2000):
+gridMaker.DuffiePanSingleton <- function(model_dynamics, N, K, R){ 
+  mu_x_params <- model_dynamics$mu_x_params
+  sigma_x_params <- model_dynamics$sigma_x_params
+  nu <- model_dynamics$nu
+  sigma <- unlist(sigma_x_params[1])
+  theta <- unlist(mu_x_params[2]); kappa <- unlist(mu_x_params[1])
+  var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), length = N)^2
+  j_nums <- seq(from = 0, to = R, by = 1)
+  jump_mid_points <- seq(from = 0.000001, to = (3 + log(K)) * sqrt(R) * nu, length = K)
+  
   return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
 }
+# Model from Bates (1996):
+gridMaker.Bates <- function(model_dynamics, N, K, R){ 
+  mu_x_params <- model_dynamics$mu_x_params
+  sigma_x_params <- model_dynamics$sigma_x_params
+  sigma <- unlist(sigma_x_params[1])
+  theta <- unlist(mu_x_params[2]); kappa <- unlist(mu_x_params[1])
+
+  var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.15)), length = N)^2
+  j_nums <- seq(from = 0, to = R, by = 1)
+  jump_mid_points <- 0
+  
+  return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
+  
+}
+
+# Model from Heston (1993):
+gridMaker.Heston <- function(model_dynamics, N, K, R){ 
+  mu_x_params <- model_dynamics$mu_x_params
+  sigma_x_params <- model_dynamics$sigma_x_params
+  sigma <- unlist(sigma_x_params[1])
+  theta <- unlist(mu_x_params[2]); kappa <- unlist(mu_x_params[1])
+  var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.15)), length = N)^2
+  j_nums <- 0
+  jump_mid_points <- 0
+  return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
+}
+
+# Model from Pitt, Malik, and Doucet (2014)
+gridMaker.PittMalikDoucet <- function(model_dynamics, N, K, R){ 
+  mu_x_params <- model_dynamics$mu_x_params
+  sigma_x_params <- model_dynamics$sigma_x_params
+  theta <- unlist(mu_x_params[1]); phi <- unlist(mu_x_params[2])
+  sigma <- unlist(sigma_x_params[1])
+  
+  mean <- theta
+  sd <- sqrt((sigma^2) / (1 - phi^2))
+  # One node point at the mean and floor(N/2) points on each side
+  var_mid_points <- seq(from = 0, to = sqrt((3 + log(N)) * sd), length = floor(N / 2 + 1))^2
+  # Pick the first N points (or else some grids generated this way have N+1 points)
+  var_mid_points <- (sort(c(-var_mid_points[2:N], var_mid_points)) + mean)[1:N]
+  j_nums <- seq(from = 0, to = 1, by = 1)
+  jump_mid_points <- 0
+  return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
+}
+
+# Model of  Taylor (1986) with leverage effect
+gridMaker.TaylorWithLeverage <- function(model_dynamics, N, K, R){ 
+  mu_x_params <- model_dynamics$mu_x_params
+  sigma_x_params <- model_dynamics$sigma_x_params
+  theta <- unlist(mu_x_params[1]); phi <- unlist(mu_x_params[2])
+  sigma <- unlist(sigma_x_params[1])
+  
+  mean <- theta
+  sd <- sqrt((sigma^2) / (1 - phi^2))
+  
+  # One node point at the mean and floor(N/2) points on each side
+  var_mid_points <- seq(from = 0, to = sqrt((3 + log(N)) * sd), length = floor(N / 2 + 1))^2
+  # Pick the first N points (or else some grids generated this way have N+1 points)
+  var_mid_points <- (sort(c(-var_mid_points[2:N], var_mid_points)) + mean)[1:N]
+  j_nums <- 0
+  jump_mid_points <- 0
+  return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
+}
+
+# Model of  Taylor (1986)
+gridMaker.Taylor <- function(model_dynamics, N, K, R){ 
+  mu_x_params <- model_dynamics$mu_x_params
+  sigma_x_params <- model_dynamics$sigma_x_params
+  theta <- unlist(mu_x_params[1]); phi <- unlist(mu_x_params[2])
+  sigma <- unlist(sigma_x_params[1])
+  
+  mean <- theta
+  sd <- sqrt((sigma^2) / (1 - phi^2))
+  
+  # One node point at the mean and floor(N/2) points on each side
+  var_mid_points <- seq(from = 0, to = sqrt((3 + log(N)) * sd), length = floor(N / 2 + 1))^2
+  # Pick the first N points (or else some grids generated this way have N+1 points)
+  var_mid_points <- (sort(c(-var_mid_points[2:N], var_mid_points)) + mean)[1:N]
+  j_nums <- 0
+  jump_mid_points <- 0
+  return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
+}
+

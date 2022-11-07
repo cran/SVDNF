@@ -2,34 +2,29 @@
 \alias{DNFOptim}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Discrete nonlinear filter maximum likelihood estimation function
+Discrete Nonlinear Filter Maximum Likelihood Estimation Function
 }
 \description{
-The \code{DNFOptim} function finds maximum likelihood estimates for stochastic volatility models parameters using the discrete nonlinear filter.
+The \code{DNFOptim} function finds maximum likelihood estimates for stochastic volatility models parameters using the \code{DNF} function.
 }
 \usage{
-DNFOptim(data, model = "Heston", N = 50, K = 20, R = 1,
-  h = 1/252, grids = 'Default',
-  rho = 0, delta = 0, alpha = 0, rho_z = 0, nu = 0,
-  jump_dist = 0, jump_params = 0,
-  mu_x, mu_y, sigma_x, sigma_y, ...)
+DNFOptim(dynamics, data, N = 50, K = 20, R = 1,
+  grids = 'Default',
+  rho = 0, delta = 0, alpha = 0, rho_z = 0, nu = 0, jump_params_list = "dummy",
+  ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{data}{A series of asset returns for which we want to run the DNF.}
-  \item{model}{Model used by the discrete nonlinear filter. The options are \code{"Heston"}, \code{"Bates"}, \code{"DuffiePanSingleton"}, \code{"Taylor"}, \code{"TaylorWithLeverage"}, and \cr \code{"PittMalikDoucet"}.}
+  \item{dynamics}{A dynamicsSVM object representing the model dynamics to be used by the optimizer to find maximum likelihood parameter estimates.}
+  \item{data}{A series of asset returns for which we want to find maximum likelihood estimates.}
   \item{N}{Number of nodes in the variance grid.}
   \item{K}{Number of nodes in the jump size grid.}
-  \item{R}{Maximum number of jumps used in the numerical integration at each timestep.} 
-  \item{rho, delta, alpha, rho_z, nu}{See \code{help(DNF)} for a description of each of these arguments individually. These arguments should be used only for custom models and can be fixed to a certain value. If they are estimated, they should be set to \code{'var'} (e.g., to estimate \code{rho} set \code{rho = 'var'}) and include it in the vector \code{par} to be passed to the \code{optim} function. See Note for the order in which custom models should receive parameters.}
-  \item{h}{Time interval between observations (e.g., \code{h = 1/252} for daily data).}
   \item{grids}{Grids to be used for numerical integration by the \code{DNF} function. The \code{DNF} function will create grids for built-in models. However, this arguments must be used for custom models. It should contain a list of three sequences: \code{var_mid_points} (variance mid-point sequence), \code{j_nums} (sequence for the number of jumps), and \code{jump_mid_points} (jump mid-point sequence). If there are no variance jumps in the model, set \code{jump_mid_points} equal to zero. If there are no jumps in the model, both \code{j_nums} and \code{jump_mid_points} should be set to zero.}
-  \item{jump_dist}{Probability mass function used to generate return or volatility jumps at each timestep (if both types of jumps are in the model, they are assumed to occur simulaneously).}
-  \item{jump_params}{List of parameters to be used as arguments in the \code{jump_dist} function (parameters should be listed in order that \code{jump_dist} uses them).}
-  \item{mu_x}{Function for variance drift (to be used with a custom model).}
-  \item{mu_y}{Function for returns drift (to be used with a custom model).}
-  \item{sigma_x}{Function for variance diffusion (to be used with a custom model).}
-  \item{sigma_y}{Function for returns diffusion (to be used with a custom model).}
+  \item{R}{Maximum number of jumps used in the numerical integration at each timestep.} 
+  \item{rho, delta, alpha, rho_z, nu}{See \code{help(dynamicsSVM)} for a description of each of these arguments individually. These arguments should be used only for custom models and can be fixed to a certain
+value (e.g., \code{rho = -0.75}). If they are estimated, they should be set to \code{'var'} (e.g., to estimate \code{rho} set \code{rho = 'var'}) and include it in the vector par to be passed to the optim function.
+See Note for the order in which custom models should receive parameters.}
+\item{jump_params_list}{List of the names of the arguments in the jump parameter distribution is the order that thye are used by the \code{jump_dist} function. This is used by \code{DNFOptim} to check for parameters that occur both in the \code{jump_dist} function and as arguments in drift or diffusion functions.}
   \item{...}{Further arguments to be passed to the \code{optim} function. See Note.}
 }
 \note{
@@ -47,7 +42,7 @@ When \code{models = "Custom"}, parameters should be passed in the following orde
 
 }
 \value{
-Returns a list obtained from \proglang{R}'s\code{optim} function. See \code{help(optim)} for details about the output.
+Returns a list obtained from \proglang{R}'s \code{optim} function. See \code{help(optim)} for details about the output.
 }
 \references{
  \proglang{R} Core Team (2019). \proglang{R}: A language and environment for statistical computing. \proglang{R} Foundation
@@ -57,8 +52,9 @@ Returns a list obtained from \proglang{R}'s\code{optim} function. See \code{help
 set.seed(1)
 
 # Generating return data
-Taylor_sim <- modelSim(t = 75, model = "Taylor", phi = 0.9,
+Taylor_mod <- dynamicsSVM(model = "Taylor", phi = 0.9,
   theta = -7.36, sigma = 0.363)
+Taylor_sim <- modelSim(t = 30, dynamics = Taylor_mod, init_vol = -7.36)
 plot(Taylor_sim$volatility_factor, type = 'l')
 plot(Taylor_sim$returns, type = 'l')
 
@@ -68,7 +64,7 @@ lower <- c(0.01, -20, 0.01); upper <- c(0.99, 0, 1)
 
 # Running DNFOptim to get MLEs
 optim_test <- DNFOptim(data = Taylor_sim$returns,
-  model = "Taylor",
+  dynamics = Taylor_mod,
   par = init_par, lower = lower, upper = upper, method = "L-BFGS-B")
                 
 # Parameter estimates

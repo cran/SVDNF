@@ -1,7 +1,14 @@
 export(DNF)
+export(DNF.dynamicsSVM)
 export(DNFOptim)
-export(DNFPlot)
+export(dynamicsSVM)
 export(modelSim)
+export(modelSim.dynamicsSVM)
+export(plot.SVDNF)
+
+S3method(DNF,dynamicsSVM)
+S3method(modelSim,dynamicsSVM)
+S3method(plot,SVDNF)
 import(Rcpp)
 importFrom("stats", "dnorm", "dpois", "dunif", "pgamma", "pnorm", "dbinom",
                "rexp", "rnorm", "rpois", "rbinom", "rgamma", "optim")

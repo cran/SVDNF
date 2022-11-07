@@ -1,36 +1,49 @@
 # Run help(DNFPOptim) for description and argument details.
-DNFOptim <- function(data, model = "Heston", N = 50, K = 20, R = 1, h = 1 / 252, grids = "Default",
-                     rho = 0, delta = 0, alpha = 0, rho_z = 0, nu = 0,
-                     jump_dist = 0, jump_params = 0,
-                     mu_x, mu_y, sigma_x, sigma_y, ...) {
+DNFOptim <- function(dynamics, data, N = 50, K = 20, R = 1, grids = "Default",
+                     rho = 0, delta = 0, alpha = 0, rho_z = 0, nu = 0, jump_params_list = "dummy",
+                     ...) {
+  model <- dynamics$model
   # Check if custom model has repeated arguments
   if(model == 'Custom'){
+    mu_y <- dynamics$mu_y; sigma_y <- dynamics$sigma_y
+    mu_x <- dynamics$mu_x; sigma_x <- dynamics$sigma_x
+    
     # Getting the arguments from drift/diffusion functions
     args_vec <- c(formalArgs(mu_y), formalArgs(sigma_y),
                   formalArgs(mu_x), formalArgs(sigma_x))
-    # Set jump_dist to a function with no arguments
-    if(typeof(jump_dist) != "closure"){
-      jump_dist <- function(){
-      return(0)
-    }
-    }
-    # Adding possible parameters that aren't in the drit/diffusion
+    # Adding possible parameters that aren't in the drift/diffusion
+    # If set to "var", they will be optimized, or else they are fixed at given values.
     if(rho == 'var'){
       args_vec <- c(args_vec, 'rho')
     }
+    else{
+      dynamics$rho = rho
+    }
     if(delta == 'var'){
       args_vec <- c(args_vec, 'delta')
+    } 
+    else{
+      dynamics$delta = delta
     }
     if(alpha == 'var'){
       args_vec <- c(args_vec, 'alpha')
     }
+    else{
+      dynamics$alpha = alpha
+    }
     if(rho_z == 'var'){
       args_vec <- c(args_vec, 'rho_z')
+    }
+    else{
+      dynamics$rho_z = rho_z
     }
     if(nu == 'var'){
       args_vec <- c(args_vec, 'nu')
     }
-    args_vec <- c(args_vec, jump_params)
+    else{
+      dynamics$nu = nu
+    }
+    args_vec <- c(args_vec, jump_params_list)
     
     args_vec <- args_vec[-which(args_vec == "dummy")]
     args_vec <- args_vec[-which(args_vec == "x")]
@@ -48,36 +61,21 @@ DNFOptim <- function(data, model = "Heston", N = 50, K = 20, R = 1, h = 1 / 252,
       alpha <- params[8]
       rho_z <- params[9]
       nu <- params[10]
-      # Jump compensator
-      alpha_bar <- exp(alpha + 0.5 * delta^2) / (1 - rho_z * nu) - 1
-
-      # Returns drift and diffusion
-      mu_y <- function(x, mu, alpha_bar, omega, h) {
-        return(h * (mu - x / 2 - alpha_bar * omega))
-      }
-      mu_y_params <- list(mu, alpha_bar, omega, h)
-      sigma_y <- function(x, h) {
-        return(sqrt(h * pmax(x, 0)))
-      }
-      sigma_y_params <- list(h)
-
-      # Volatility drift and diffusion
-      mu_x <- function(x, kappa, theta, h) {
-        return(x + h * kappa * (theta - pmax(0, x)))
-      }
-      mu_x_params <- list(kappa, theta, h)
-
-      sigma_x <- function(x, sigma, h) {
-        return(sigma * sqrt(h * pmax(x, 0)))
-      }
-      sigma_x_params <- list(sigma, h)
-
+      
+      dynamics$mu_y_params <- list(mu, alpha, delta, rho_z, nu, omega)
+      dynamics$mu_x_params <- list(kappa, theta)
+      dynamics$sigma_x_params <- list(sigma)
+      
       # Jump distribution for the DuffiePanSingleton Model
-      jump_dist <- dpois
-      jump_params <- c(h * omega)
+      dynamics$jump_params <- c(dynamics$h * omega)
+      dynamics$rho <- rho
+      dynamics$delta <- delta
+      dynamics$alpha <- alpha
+      dynamics$rho_z <- rho_z
+      dynamics$nu <- nu
     }
     # Model from Bates (1996):
-    if (model == "Bates") {
+    else if (model == "Bates") {
       mu <- params[1]
       kappa <- params[2]
       theta <- params[3]
@@ -86,67 +84,36 @@ DNFOptim <- function(data, model = "Heston", N = 50, K = 20, R = 1, h = 1 / 252,
       omega <- params[6]
       delta <- params[7]
       alpha <- params[8]
-      # Jump compensator
-      alpha_bar <- exp(alpha + 0.5 * delta^2) - 1
-
-      # Returns drift and diffusion
-      mu_y <- function(x, mu, alpha_bar, omega, h) {
-        return(h * (mu - x / 2 - alpha_bar * omega))
-      }
-      mu_y_params <- list(mu, alpha_bar, omega, h)
-
-      sigma_y <- function(x, h) {
-        return(sqrt(h * pmax(x, 0)))
-      }
-      sigma_y_params <- list(h)
-
-      # Volatility drift and diffusion
-      mu_x <- function(x, h, kappa, theta) {
-        return(x + h * kappa * (theta - pmax(0, x)))
-      }
-      mu_x_params <- list(h, kappa, theta)
-
-      sigma_x <- function(x, sigma, h) {
-        return(sigma * sqrt(h * pmax(x, 0)))
-      }
-      sigma_x_params <- list(sigma, h)
-
-      # Jumps for the Bates Model
-      jump_dist <- dpois
-      jump_params <- c(h * omega)
+      
+      dynamics$mu_y_params <- list(mu, alpha, delta, omega)
+      dynamics$mu_x_params <- list(kappa, theta)
+      dynamics$sigma_x_params <- list(sigma)
+      
+      # Jump distribution for the Bates Model
+      dynamics$jump_params <- c(dynamics$h * omega)
+      dynamics$rho <- rho
+      dynamics$delta <- delta
+      dynamics$alpha <- alpha
     }
 
     # Model from Heston (1993):
-    if (model == "Heston") {
+    else if (model == "Heston") {
       mu <- params[1]
       kappa <- params[2]
       theta <- params[3]
       sigma <- params[4]
       rho <- params[5]
-      # Returns drift and diffusion
-      mu_y <- function(x, h, mu) {
-        return(h * (mu - x / 2))
-      }
-      mu_y_params <- list(h, mu)
-      sigma_y <- function(x, h) {
-        return(sqrt(h * pmax(x, 0)))
-      }
-      sigma_y_params <- list(h)
-
-      # Volatility drift and diffusion
-      mu_x <- function(x, h, kappa, theta) {
-        return(x + h * kappa * (theta - pmax(0, x)))
-      }
-      mu_x_params <- list(h, kappa, theta)
-
-      sigma_x <- function(x, sigma, h) {
-        return(sigma * sqrt(h * pmax(x, 0)))
-      }
-      sigma_x_params <- list(sigma, h)
+      
+      dynamics$mu_y_params <- list(mu)
+      dynamics$mu_x_params <- list(kappa, theta)
+      dynamics$sigma_x_params <- list(sigma)
+      dynamics$rho <- rho
+  
+      
     }
 
     # Model from Pitt, Malik, and Doucet (2014)
-    if (model == "PittMalikDoucet") {
+    else if (model == "PittMalikDoucet") {
       phi <- params[1]
       theta <- params[2]
       sigma <- params[3]
@@ -154,87 +121,40 @@ DNFOptim <- function(data, model = "Heston", N = 50, K = 20, R = 1, h = 1 / 252,
       p <- params[5]
       delta <- params[6]
       alpha <- params[7]
-      # Returns drift and diffusion
-      mu_y <- function(x, mu_y_params) { # Dummy parameter to pass to the do.call function
-        return(0)
-      }
-      mu_y_params <- list(0)
-      sigma_y <- function(x, sigma_y_params) { # Dummy parameter to pass to the do.call function
-        return(exp(x / 2))
-      }
-      sigma_y_params <- list(0)
-
-      # Volatility drift and diffusion
-      mu_x <- function(x, phi, theta) {
-        return(theta + phi * (x - theta))
-      }
-      mu_x_params <- list(phi, theta)
-      sigma_x <- function(x, sigma) {
-        return(sigma)
-      }
-      sigma_x_params <- list(sigma)
-
+      
+      dynamics$mu_x_params <- list(theta, phi)
+      dynamics$sigma_x_params <- list(sigma)
+      
       # Jumps for the PMD Model
-      jump_dist <- dbinom
-      jump_params <- c(1, p) # size = 1, p=p for dbinom
+      dynamics$jump_params <- c(1, p) # size = 1, p=p for dbinom
+      dynamics$delta <- delta
+      dynamics$alpha <- alpha
+      dynamics$rho <- rho
+      
     }
 
     # Model of  Taylor (1986) with leverage effect
-    if (model == "TaylorWithLeverage") {
+    else if  (model == "TaylorWithLeverage") {
       phi <- params[1]
       theta <- params[2]
       sigma <- params[3]
       rho <- params[4]
-
-      # Returns drift and diffusion
-      mu_y <- function(x, dummy) { # mu_y_params is included to pass to do.call
-        return(0)
-      }
-      mu_y_params <- list(0)
-      sigma_y <- function(x, dummy) { # sigma_y_params is included to pass to do.call
-        return(exp(x / 2))
-      }
-      sigma_y_params <- list(0)
-
-      # Volatility drift and diffusion
-      mu_x <- function(x, phi, theta) {
-        return(theta + phi * (x - theta))
-      }
-      mu_x_params <- list(phi, theta)
-      sigma_x <- function(x, sigma) {
-        return(sigma)
-      }
-      sigma_x_params <- list(sigma)
+      
+      dynamics$mu_x_params <- list(theta, phi)
+      dynamics$sigma_x_params <- list(sigma)
+      dynamics$rho <- rho
     }
 
     # Model of  Taylor (1986)
-    if (model == "Taylor") {
+    else if (model == "Taylor") {
       phi <- params[1]
       theta <- params[2]
       sigma <- params[3]
-      rho <- 0 # No leverage effects in this model.
 
-      # Returns drift and diffusion
-      mu_y <- function(x, mu_y_params) { # mu_y_params is included to pass to do.call
-        return(0) # return a vector of zeroes with the length of x
-      }
-      mu_y_params <- list(0)
-
-      sigma_y <- function(x, sigma_y_params) { # sigma_y_params is included to pass to do.call
-        return(exp(x / 2))
-      }
-      sigma_y_params <- list(0)
-      # Volatility drift and diffusion
-      mu_x <- function(x, theta, phi) {
-        return(theta + phi * (x - theta))
-      }
-      mu_x_params <- list(theta, phi)
-      sigma_x <- function(x, sigma) {
-        return(sigma) # return a vector of sigmas with the length of x
-      }
-      sigma_x_params <- list(sigma)
+      dynamics$mu_x_params <- list(theta, phi)
+      dynamics$sigma_x_params <- list(sigma)
     }
-    if (model == "Custom") {
+    else if (model == "Custom") {
       # Checking if arguments are repeated in the the drift/diffusion/jumps functions:
       if(any(duplicated(args_vec))){
         index_formals <- which(duplicated(args_vec, fromLast = TRUE) & !duplicated(args_vec))
@@ -274,81 +194,103 @@ DNFOptim <- function(data, model = "Heston", N = 50, K = 20, R = 1, h = 1 / 252,
         mu_y_params <- list(0)
       }
       else{
-        mu_y_params <- as.list(params[1:length_mu_y])
+        dynamics$mu_y_params <- as.list(params[1:length_mu_y])
         params <- params[-1:-length_mu_y]
       }
       if(formalArgs(sigma_y)[2] == 'dummy'){
-        sigma_y_params <- list(0)
+        dynamics$sigma_y_params <- list(0)
       }
       else{
-        sigma_y_params <- as.list(params[1:length_sigma_y])
+        dynamics$sigma_y_params <- as.list(params[1:length_sigma_y])
         params <- params[-1:-length_sigma_y]
       }
       if(formalArgs(mu_x)[2] == "dummy"){
         mu_x_params <- list(0)
       }
       else{
-        mu_x_params <- as.list(params[1:length_mu_x])
+        dynamics$mu_x_params <- as.list(params[1:length_mu_x])
         params <- params[-1:-length_mu_x]
       }
       if(formalArgs(sigma_x)[2] == "dummy"){
         sigma_x_params <- list(0)
       }
       else{
-        sigma_x_params <- as.list(params[1:length_sigma_x])
+        dynamics$sigma_x_params <- as.list(params[1:length_sigma_x])
         params <- params[-1:-length_sigma_x]
       }
       if(rho == 'var'){
-        rho <- params[1]
+        dynamics$rho <- params[1]
         params <- params[-1]
       }
       if(delta == 'var'){
-        delta <- params[1]
+        dynamics$delta <- params[1]
         params <- params[-1]
       }
       if(alpha == 'var'){
-        alpha <- params[1]
+        dynamics$alpha <- params[1]
         params <- params[-1]
       }
       if(rho_z == 'var'){
-        rho_z <- params[1]
+        dynamics$rho_z <- params[1]
         params <- params[-1]
       }
       if(nu == 'var'){
-        nu <- params[1]
+        dynamics$nu <- params[1]
         params <- params[-1]
       }
-      if(typeof(jump_params) != 'double'){
-        jump_params <- as.list(params)
+      if(jump_params_list != 'dummy'){
+        dynamics$jump_params <- as.list(params)
       }
-
-    }
-    # Creating grid for listed models
-    if (length(grids) == 1) { # Check if users input a custom grid
-      grids <- gridMaker(
-        R = R, N = N, K = K, sigma = sigma, kappa = kappa,
-        theta = theta, rho = rho, omega = omega, alpha = alpha,
-        delta = delta, mu = mu, nu = nu, rho_z = rho_z,
-        h = h, model = model, phi = phi
-      )
     }
 
-     if( delta < 0 |  rho < -1 |  rho > 1){
-       LL = -9999999999999999999
+     if(dynamics$delta < 0 |  dynamics$rho < -1 |  dynamics$rho > 1 |  dynamics$nu < 0){
+       LL <- -9999999999999999999
+       return(-LL)
      }
-     else{
-    LL <- DNF(
-      data = data, N = N, K = K, R = R,
-      mu_x = mu_x, mu_y = mu_y, sigma_x = sigma_x, sigma_y = sigma_y,
-      mu_x_params = mu_x_params, mu_y_params = mu_y_params, rho = rho,
-      sigma_x_params = sigma_x_params, sigma_y_params = sigma_y_params,
-      jump_dist = jump_dist, jump_params = jump_params, 
-      delta = delta, rho_z = rho_z, nu = nu, alpha = alpha,
-      h = h, model = "Custom", grids = grids
-    )$log_likelihood
+     if(any(dynamics$model == c("DuffiePanSingleton", "Bates", "Heston"))){
+       if(theta <= 0){ 
+         LL <- -9999999999999999999
+         return(-LL)
+       }
+       if(kappa <= 0){ 
+         LL <- -9999999999999999999
+         return(-LL)
+       }
+       if(sigma <= 0){ 
+         LL <- -9999999999999999999
+         return(-LL)
+       }
+       if(dynamics$model != "Heston"){
+         if(omega < 0){
+           LL <- -9999999999999999999
+           return(-LL)
+         }
+       } 
      }
+     if(any(dynamics$model == c("PittMalikDoucet", "TaylorWithLeverage", "Taylor"))){
+       if(sigma < 0){ 
+         LL <- -9999999999999999999
+         return(-LL)
+       }
+       if(dynamics$model == "PittMalikDoucet"){
+         if(p < 0 || p > 1){
+           LL <- -9999999999999999999
+           return(-LL)
+         }
+       }
+       if(phi < 0 || phi > 1){
+         LL <- -9999999999999999999
+         return(-LL)
+       }
+     }
+     # Creating grid for listed models
+     if (length(grids) == 1) { # Check if users input a custom grid
+       grids <- gridMaker(dynamics, R = R, N = N, K = K)
+       
+     }
+    LL <- DNF(data = data, N = N, K = K, R = R, dynamics = dynamics, grids = grids)$log_likelihood
     if (LL == Inf | LL == -Inf) {
-      # There can be issues with unusual parameter combinations at the boundary of the optimizer's exploration
+      # There can be issues with unusual parameter combinations
       LL <- -9999999999999999999 # Need finite results
     }
     return(-LL)
