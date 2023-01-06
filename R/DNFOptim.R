@@ -243,7 +243,7 @@ DNFOptim <- function(dynamics, data, N = 50, K = 20, R = 1, grids = "Default",
       }
     }
 
-     if(dynamics$delta < 0 |  dynamics$rho < -1 |  dynamics$rho > 1 |  dynamics$nu < 0){
+     if(dynamics$delta <= 0 |  dynamics$rho <= -1 |  dynamics$rho >= 1 |  dynamics$nu <= 0){
        LL <- -9999999999999999999
        return(-LL)
      }
@@ -261,24 +261,24 @@ DNFOptim <- function(dynamics, data, N = 50, K = 20, R = 1, grids = "Default",
          return(-LL)
        }
        if(dynamics$model != "Heston"){
-         if(omega < 0){
+         if(omega <= 0){
            LL <- -9999999999999999999
            return(-LL)
          }
        } 
      }
      if(any(dynamics$model == c("PittMalikDoucet", "TaylorWithLeverage", "Taylor"))){
-       if(sigma < 0){ 
+       if(sigma <= 0){ 
          LL <- -9999999999999999999
          return(-LL)
        }
        if(dynamics$model == "PittMalikDoucet"){
-         if(p < 0 || p > 1){
+         if(p <= 0 || p >= 1){
            LL <- -9999999999999999999
            return(-LL)
          }
        }
-       if(phi < 0 || phi > 1){
+       if(phi <= 0 || phi >= 1){
          LL <- -9999999999999999999
          return(-LL)
        }

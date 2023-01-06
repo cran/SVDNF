@@ -18,15 +18,17 @@ The \code{DNF} function applies the discrete nonlinear filter (DNF) of Kitagawa 
 \item{N}{Number of nodes in the variance grid.}
 \item{K}{Number of nodes in the jump size grid.}
 \item{R}{Maximum number of jumps used in the numerical integration at each timestep.} 
-\item{grids}{Grids to be used for numerical integration by the \code{DNF} function. The \code{DNF} function will create grids for built-in models. However, this arguments must be used for custom models. It should contain a list of three sequences: \code{var_mid_points} (variance mid-point sequence), \code{j_nums} (sequence for the number of jumps), and \code{jump_mid_points} (jump mid-point sequence). If there are no variance jumps in the model, set \code{jump_mid_points} equal to zero. If there are no jumps in the model, both \code{j_nums} and \code{jump_mid_points} should be set to zero.}
+\item{grids}{Grids to be used for numerical integration by the \code{DNF} function. The \code{DNF} function creates grids for built-in models. However, this arguments must be provided for custom models. It should contain a list of three sequences: \code{var_mid_points} (variance mid-point sequence), \code{j_nums} (sequence for the number of jumps), and \code{jump_mid_points} (jump mid-point sequence). If there are no variance jumps in the model, set \code{jump_mid_points} equal to zero. If there are no jumps in the model, both \code{j_nums} and \code{jump_mid_points} should be set to zero.}
   \item{...}{Further arguments passed to or from other methods.}
 
 }
 \value{
 \item{log_likelihood}{Log-likelihood evaluation based on the DNF.}
-\item{filter_grid}{Grid of dimensions \code{N} by \code{T+1} that stores each timesteps' filtering distributions (we assume the filtering distribution is uniform at \eqn{t = 0}).}
+\item{filter_grid}{Grid of dimensions \code{N} by \code{T+1} that stores each time-step's filtering distributions (we assume the filtering distribution is uniform at \eqn{t = 0}).}
 \item{likelihoods}{Likelihood contribution at each time-step throughout the series.}
 \item{grids}{List of grids used for numerical integration by the DNF.}
+\item{dynamics}{The model dynamics used by the DNF.}
+
 }
 \references{
 Bégin, J.F., Boudreault, M. (2021) Likelihood evaluation of jump-diffusion models using deterministic nonlinear filters. \emph{Journal of Computational and Graphical Statistics}, 30(2), 452--466.

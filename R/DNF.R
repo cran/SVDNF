@@ -46,7 +46,8 @@ DNF.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = "Defa
   # Compute the likelihood:
   log_likelihood <- sum(log(likelihoods))
 
-  SVDNF <- list(log_likelihood = log_likelihood, filter_grid = filter_grid, likelihoods = likelihoods, grids = grids)
+  SVDNF <- list(log_likelihood = log_likelihood, filter_grid = filter_grid,
+                likelihoods = likelihoods, grids = grids, dynamics = dynamics)
   class(SVDNF) = "SVDNF"
   return(SVDNF)
   }

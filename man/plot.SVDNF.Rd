@@ -4,20 +4,26 @@
 \title{
 DNF Filtering Distribution Plot Function}
 \description{
-This function plots the median of the filtering distribution estimated from the \code{DNF} function along with user-selected upper and lower percentiles.
+This function plots the median of the filtering and prediction distributions estimated from the \code{DNF} function along with user-selected upper and lower percentiles.
 }
 \usage{
-\method{plot}{SVDNF}(x, lower_p = 0.05, upper_p = 0.95, ...)
+\method{plot}{SVDNF}(x, lower_p = 0.05, upper_p = 0.95, tlim = 'default',
+  location = 'topright', ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{x}{An \code{SVDNF} object. The \code{plot} will plot the median and percentiles from its filtering distribution.}
+  \item{x}{An \code{SVDNF} object. The \code{plot} plots the median and selected percentiles from the filtering distribution.}
   \item{lower_p}{Lower percentile of the filtering distribution to plot.}
   \item{upper_p}{Upper percentile of the filtering distribution to plot.}
-  \item{...}{Other parameters to be passed through to plotting functions.}
+  \item{tlim}{The \code{plot} function plots the filtering and prediction distributions over the interval \code{tlim}. For example to plot the first \code{500} steps, set \code{tlim = c(1, 500)}. By default, filtering and prediction distribution estimates for every step in the time-series are generated.
+  
+If \code{tlim} is set to a single number (e.g., \code{tlim = c(5)}), \code{plot} graphs the estimated probability density functions of the filtering (in magenta) and prediction (in blue) distributions at that timestep.}
+  \item{location}{Location keyword passed to the \code{legend} function to determine the location of the legend. The keyword should be selected from the list \code{"bottomright"}, \code{"bottom"}, \code{"bottomleft"}, \code{"left"}, \code{"topleft"}, \code{"top"}, \code{"topright"}, \code{"right"}, and \code{"center"}.}
+
+  \item{...}{Other parameters to be passed through to function.}
 }
 \value{
-No return value, this function generates a plot with the median of the volatility factor obtained from the filtering distribution as well as its upper and lower percentiles from \code{lower_p} and \code{upper_p}.
+No return value; this function generates a plot with the median of the volatility factor obtained from the filtering distribution as well as its upper and lower percentiles from \code{lower_p} and \code{upper_p}.
 }
 \examples{
 set.seed(1)
@@ -27,5 +33,19 @@ Bates_sim <- modelSim(t = 500, dynamics = Bates_mod)
 
 # Runs DNF on the data.
 dnf_filter <- DNF(data = Bates_sim$returns, dynamics = Bates_mod)
-plot(dnf_filter, ylim = c(0, 0.15))
+
+# Plot whole interval (default)
+plot(dnf_filter, ylim = c(0, 0.15), type = 'l',
+  ylab = "Volatility Factor", xlab = 'Time')
+
+# Plot specific interval
+tlim <- c(100,350)
+plot(dnf_filter, ylim = c(0, 0.15), type = 'l',
+  ylab = "Volatility Factor", xlab = 'Time', tlim = tlim)
+
+# Plot specific point 
+tlim <- c(100)
+plot(dnf_filter, ylim = c(0, 0.15), type = 'l',
+  ylab = "Volatility Factor", xlab = 'Time', tlim = tlim)
+
 }

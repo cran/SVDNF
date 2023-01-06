@@ -10,9 +10,9 @@ S3method(DNF,dynamicsSVM)
 S3method(modelSim,dynamicsSVM)
 S3method(plot,SVDNF)
 import(Rcpp)
-importFrom("stats", "dnorm", "dpois", "dunif", "pgamma", "pnorm", "dbinom",
+importFrom("stats", "dnorm", "dpois", "dunif", "pgamma", "dgamma", "pnorm", "dbinom",
                "rexp", "rnorm", "rpois", "rbinom", "rgamma", "optim")
-importFrom("graphics", "plot", "points")
+importFrom("graphics", "plot", "points", "legend")
 importFrom("methods", "formalArgs")
 useDynLib(SVDNF, .registration = TRUE)
 
