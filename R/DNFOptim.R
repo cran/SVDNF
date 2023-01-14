@@ -243,7 +243,7 @@ DNFOptim <- function(dynamics, data, N = 50, K = 20, R = 1, grids = "Default",
       }
     }
 
-     if(dynamics$delta <= 0 |  dynamics$rho <= -1 |  dynamics$rho >= 1 |  dynamics$nu <= 0){
+     if(dynamics$delta < 0 |  dynamics$rho <= -1 |  dynamics$rho >= 1 |  dynamics$nu < 0){
        LL <- -9999999999999999999
        return(-LL)
      }
