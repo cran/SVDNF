@@ -42,7 +42,8 @@ When \code{models = "Custom"}, parameters should be passed in the following orde
 
 }
 \value{
-Returns a list obtained from \proglang{R}'s \code{optim} function. See \code{help(optim)} for details about the output.
+\item{optim}{Returns a list obtained from \proglang{R}'s \code{optim} function. See \code{help(optim)} for details about the output.}
+\item{SVDNF}{Returns a SVDNF object obtained from running the \code{DNF} function at the MLE parameter values. See \code{help(DNF)} for details about the output}
 }
 \references{
  \proglang{R} Core Team (2019). \proglang{R}: A language and environment for statistical computing. \proglang{R} Foundation
@@ -60,7 +61,7 @@ plot(Taylor_sim$returns, type = 'l')
 
 # Initial values and optimization bounds
 init_par <- c( 0.7, -5, 0.3)
-lower <- c(0.01, -20, 0.01); upper <- c(0.99, 0, 1)
+lower <- c(0.01, -20, 0.1); upper <- c(0.99, 0, 1)
 
 # Running DNFOptim to get MLEs
 optim_test <- DNFOptim(data = Taylor_sim$returns,
@@ -68,5 +69,10 @@ optim_test <- DNFOptim(data = Taylor_sim$returns,
   par = init_par, lower = lower, upper = upper, method = "L-BFGS-B")
                 
 # Parameter estimates
-optim_test$par
+optim_test$optim$par
+
+# Extract dynamics at the MLE parameters
+MLE_dynam <- optim_test$SVDNF
+# Plot prediction and filtering distributions
+plot(MLE_dynam, type = 'l')
 }

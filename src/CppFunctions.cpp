@@ -43,7 +43,7 @@ NumericVector Cpp_prodfun(NumericVector probs, NumericVector filter) {
   int n3 = n2/n1; // N*K*R
   double x0;
   for (int j = 0; j < n3; j++) {
-    x0 = filter[j % n1]; //Each filter elements are repeating N times every N*N times
+    x0 = filter[j % n1]; //Each filter elements are repeated N times in every N*N vector elements
     for (int i = j*n1; i < (j+1)*n1; i++) {
      probs[i] *= x0;
     }

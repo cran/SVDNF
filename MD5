@@ -1,7 +1,7 @@
-07d9c5f161dbb6d6c392f7d1c8920de2 *DESCRIPTION
+edc47b7e820658c07f17efd962d0d810 *DESCRIPTION
 0ed892fd7ae3f86fa58e59d2eab3a74a *NAMESPACE
 1112d2d585805ac1dd5c408f79e557d3 *R/DNF.R
-faf3de9761ff9e4719394d5743223ff5 *R/DNFOptim.R
+79bc2fd9f1812c943ede9691fc4cf39b *R/DNFOptim.R
 d48a7cc560eecc4550a0c5abae0baaec *R/RcppExports.R
 7af9937b0602b1ae48ebaa89d5520310 *R/dynamicsSVM.R
 dd9805e5a6dc38b40c51e97310686612 *R/gridMaker.R
@@ -9,9 +9,9 @@ bc7f8b033413f466f207100c942d4389 *R/modelSim.R
 390cde2f760fa6061c65f12dcddf8776 *R/plot.SVDNF.R
 b6b67ee59927d8cf240a4db6c11e9352 *R/probCalculator.R
 8bb7be5357b4c3e77cf7f3bc55ff27d1 *man/DNF.dynamicsSVM.Rd
-5c107b658ba44313e8027326bdf72dc0 *man/DNFOptim.Rd
+fc1914bd1861edfeb4f8497c8c2c5315 *man/DNFOptim.Rd
 fe262c296502dc1b9744333f278aa8fb *man/dynamicsSVM.Rd
 7afefab88f344db2f501b69258c18d86 *man/modelSim.dynamicsSVM.Rd
 4277c8ce3ebcca2332e612a1671fb59e *man/plot.SVDNF.Rd
-88e9ae2a0878f108ecc2690b57b9d006 *src/CppFunctions.cpp
+aa99f92ff5c48eae96c994caef754110 *src/CppFunctions.cpp
 d074a13fc9420720987e48e6832f6f3c *src/RcppExports.cpp
