@@ -154,7 +154,7 @@ dynamicsSVM = function(mu = 0.038, kappa = 3.689, theta = 0.032,
   else if (model == "PittMalikDoucet") {
     
     # Returns drift and diffusion
-    mu_y_pmd <- function(x, mu_y_params) { # Dummy parameter to pass to the do.call function
+    mu_y_pmd <- function(x, dummy) { # Dummy parameter to pass to the do.call function
       return(0)
     }
     mu_y_params <- list(0)
@@ -164,10 +164,10 @@ dynamicsSVM = function(mu = 0.038, kappa = 3.689, theta = 0.032,
     sigma_y_params <- list(0)
     
     # Volatility drift and diffusion
-    mu_x_pmd <- function(x, theta, phi) {
+    mu_x_pmd <- function(x, phi, theta) {
       return(theta + phi * (x - theta))
     }
-    mu_x_params <- list(theta, phi)
+    mu_x_params <- list(phi, theta)
     sigma_x_pmd <- function(x, sigma) {
       return(sigma)
     }
@@ -190,20 +190,20 @@ dynamicsSVM = function(mu = 0.038, kappa = 3.689, theta = 0.032,
   else if (model == "TaylorWithLeverage") {
     
     # Returns drift and diffusion
-    mu_y_twl <- function(x, mu_y_params) { # mu_y_params is included to pass to do.call
+    mu_y_twl <- function(x, dummy) { # dummy is included to pass to do.call
       return(0)
     }
     mu_y_params <- list(0)
-    sigma_y_twl <- function(x, dummy) { # sigma_y_params is included to pass to do.call
+    sigma_y_twl <- function(x, dummy) { # dummy is included to pass to do.call
       return(exp(x / 2))
     }
     sigma_y_params <- list(0)
     
     # Volatility drift and diffusion
-    mu_x_twl <- function(x, theta, phi) {
+    mu_x_twl <- function(x, phi, theta) {
       return(theta + phi * (x - theta))
     }
-    mu_x_params <- list(theta, phi)
+    mu_x_params <- list(phi, theta)
     sigma_x_twl <- function(x, sigma) {
       return(sigma)
     }
@@ -219,20 +219,20 @@ dynamicsSVM = function(mu = 0.038, kappa = 3.689, theta = 0.032,
   # Model of  Taylor (1986)
   else if (model == "Taylor") {
     # Returns drift and diffusion
-    mu_y_taylor <- function(x, mu_y_params) { # mu_y_params is included to pass to do.call
+    mu_y_taylor <- function(x, dummy) { # dummy is included to pass to do.call
       return(0) # return a vector of zeroes with the length of x
     }
     mu_y_params <- list(0)
     
-    sigma_y_taylor <- function(x, dummy) { # sigma_y_params is included to pass to do.call
+    sigma_y_taylor <- function(x, dummy) { # dummy is included to pass to do.call
       return(exp(x / 2))
     }
     sigma_y_params <- list(0)
     # Volatility drift and diffusion
-    mu_x_taylor <- function(x, theta, phi) {
+    mu_x_taylor <- function(x, phi, theta) {
       return(theta + phi * (x - theta))
     }
-    mu_x_params <- list(theta, phi)
+    mu_x_params <- list(phi, theta)
     sigma_x_taylor <- function(x, sigma) {
       return(sigma) # return a vector of sigmas with the length of x
     }
@@ -259,3 +259,50 @@ dynamicsSVM = function(mu = 0.038, kappa = 3.689, theta = 0.032,
   class(model_dynamics) <- list('dynamicsSVM', model)
   return(model_dynamics)
 }
+
+# Print method for dynamicsSVM objects
+print.dynamicsSVM <- function(x, ...){
+  # Extract arguments from drift and diffusion functions
+  mu_y_args <- formalArgs(x$mu_y)
+  sigma_y_args <- formalArgs(x$sigma_y)
+  mu_x_args <- formalArgs(x$mu_x)
+  sigma_x_args <- formalArgs(x$sigma_x)
+  # Remove volatility argument x and keep only model parameters
+  mu_y_args <- mu_y_args[-which(mu_y_args == "x")]
+  sigma_y_args <- sigma_y_args[-which(sigma_y_args == "x")]
+  mu_x_args <- mu_x_args[-which(mu_x_args == "x")]
+  sigma_x_args <- sigma_x_args[-which(sigma_x_args == "x")]
+  
+  cat("\nModel:\n")
+  cat(x$model, '\n')
+  
+  cat("\nReturn Drift Function:\n")
+  cat(deparse(x$mu_y), "\n")
+  cat("\nReturn Drift Parameters:\n")
+  cat(rbind(mu_y_args, unlist(x$mu_y_params)), "\n")
+
+  
+  cat("\nReturn Diffusion Function:\n")
+  cat(deparse(x$sigma_y), "\n")
+  cat("\nReturn Diffusion Parameters:\n")
+  cat(rbind(sigma_y_args, unlist(x$sigma_y_params)), "\n")
+  
+  cat("\nVolatility Factor Drift Function:\n")
+  cat(deparse(x$mu_x), "\n")
+  cat("\nVolatility Factor Drift Parameters:\n")
+  cat(rbind(mu_x_args, unlist(x$mu_x_params)), "\n")
+  
+  cat("\nVolatility Factor Diffusion Function:\n")
+  cat(deparse(x$sigma_x), "\n")
+  cat("\nVolatility Factor diffusion Parameters:\n")
+  cat(rbind(sigma_x_args, unlist(x$sigma_x_params)), "\n" )
+  
+  if(!is.null(x$jump_density)){
+  cat("\nJump Distribution\n")
+  cat(deparse(x$jump_density), '\n')
+  cat("\nJump Distribution Parameters\n")
+  cat(rbind(formalArgs(x$jump_density)[c(2,(length(x$jump_params)+1))],
+            unlist(x$jump_params)), "\n" )
+  }
+}
+

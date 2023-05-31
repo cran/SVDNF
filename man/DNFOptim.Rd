@@ -1,4 +1,5 @@
-\name{DNFOptim}
+\name{DNFOptim.dynamicsSVM}
+\alias{DNFOptim.dynamicsSVM}
 \alias{DNFOptim}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
@@ -8,7 +9,7 @@ Discrete Nonlinear Filter Maximum Likelihood Estimation Function
 The \code{DNFOptim} function finds maximum likelihood estimates for stochastic volatility models parameters using the \code{DNF} function.
 }
 \usage{
-DNFOptim(dynamics, data, N = 50, K = 20, R = 1,
+\method{DNFOptim}{dynamicsSVM}(dynamics, data, N = 50, K = 20, R = 1,
   grids = 'Default',
   rho = 0, delta = 0, alpha = 0, rho_z = 0, nu = 0, jump_params_list = "dummy",
   ...)
@@ -30,9 +31,9 @@ See Note for more details on the order in which custom models should receive par
 \note{
 When passing the initial parameter vector \code{par} to the \code{optim} function (via \code{...}), the parameters should follow a specific order.
 
-For the \code{PittMalikDoucet} model, the parameters should be in the following order: \code{phi}, \code{theta}, \code{sigma}, \code{rho}, \code{p}, \code{delta}, and \code{alpha}.
+For the \code{PittMalikDoucet} model, the parameters should be in the following order: \code{phi}, \code{theta}, \code{sigma}, \code{rho}, \code{delta}, \code{alpha}, and \code{p}.
 
-For the \code{DuffiePanSingleton} model, the parameters should be in the following order: \code{mu}, \code{kappa}, \code{theta}, \code{sigma}, \code{rho}, \code{omega}, \code{delta}, \code{alpha}, \code{rho_z}, and \code{nu}.
+For the \code{DuffiePanSingleton} model, the parameters should be in the following order: \code{mu}, \code{alpha}, \code{delta}, \code{rho_z}, \code{nu}, \code{omega}, \code{kappa}, \code{theta}, \code{sigma}, and \code{rho}.
 
 All other built-in models can be seen as being nested within these two  models (i.e., \code{Heston} and \code{Bates} models are nested in the \code{DuffiePanSingleton} model, while \code{Taylor} and \cr \code{TaylorWithLeverage} are nested in the \code{PittMalikDoucet} model). Their parameters should be passed in the same order as those in the more general models, minus the parameters not found in these nested models.
 
@@ -44,6 +45,7 @@ When \code{models = "Custom"}, parameters should be passed in the following orde
 \value{
 \item{optim}{Returns a list obtained from \proglang{R}'s \code{optim} function. See \code{help(optim)} for details about the output.}
 \item{SVDNF}{Returns a SVDNF object obtained from running the \code{DNF} function at the MLE parameter values. See \code{help(DNF)} for details about the output}
+\item{rho, delta, alpha, rho_z, nu}{See \code{help(dynamicsSVM)} for a description of each of these arguments individually. If they are estimated, they are set to \code{'var'}. If the parameters were fixed during the estimation, this will return the value at which they were fixed.}
 }
 \references{
  \proglang{R} Core Team (2019). \proglang{R}: A language and environment for statistical computing. \proglang{R} Foundation
@@ -69,10 +71,9 @@ optim_test <- DNFOptim(data = Taylor_sim$returns,
   par = init_par, lower = lower, upper = upper, method = "L-BFGS-B")
                 
 # Parameter estimates
-optim_test$optim$par
+summary(optim_test)
 
-# Extract dynamics at the MLE parameters
-MLE_dynam <- optim_test$SVDNF
 # Plot prediction and filtering distributions
-plot(MLE_dynam, type = 'l')
+plot(optim_test, type = 'l')
+
 }

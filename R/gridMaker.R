@@ -17,7 +17,7 @@ gridMaker.default <- function(model_dynamics, ...){
   stop("Please select a built-in model or input your own grid to the DNF")
 }
 # Model from Duffie, Pan, and Singleton (2000):
-gridMaker.DuffiePanSingleton <- function(model_dynamics, N, K, R){ 
+gridMaker.DuffiePanSingleton <- function(model_dynamics, N, K, R, ...){ 
   mu_x_params <- model_dynamics$mu_x_params
   sigma_x_params <- model_dynamics$sigma_x_params
   nu <- model_dynamics$nu
@@ -30,12 +30,12 @@ gridMaker.DuffiePanSingleton <- function(model_dynamics, N, K, R){
   return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
 }
 # Model from Bates (1996):
-gridMaker.Bates <- function(model_dynamics, N, K, R){ 
+gridMaker.Bates <- function(model_dynamics, N, K, R, ...){ 
   mu_x_params <- model_dynamics$mu_x_params
   sigma_x_params <- model_dynamics$sigma_x_params
   sigma <- unlist(sigma_x_params[1])
   theta <- unlist(mu_x_params[2]); kappa <- unlist(mu_x_params[1])
-
+  
   var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.15)), length = N)^2
   j_nums <- seq(from = 0, to = R, by = 1)
   jump_mid_points <- 0
@@ -45,7 +45,7 @@ gridMaker.Bates <- function(model_dynamics, N, K, R){
 }
 
 # Model from Heston (1993):
-gridMaker.Heston <- function(model_dynamics, N, K, R){ 
+gridMaker.Heston <- function(model_dynamics, N, K, R, ...){ 
   mu_x_params <- model_dynamics$mu_x_params
   sigma_x_params <- model_dynamics$sigma_x_params
   sigma <- unlist(sigma_x_params[1])
@@ -57,10 +57,10 @@ gridMaker.Heston <- function(model_dynamics, N, K, R){
 }
 
 # Model from Pitt, Malik, and Doucet (2014)
-gridMaker.PittMalikDoucet <- function(model_dynamics, N, K, R){ 
+gridMaker.PittMalikDoucet <- function(model_dynamics, N, K, R, ...){ 
   mu_x_params <- model_dynamics$mu_x_params
   sigma_x_params <- model_dynamics$sigma_x_params
-  theta <- unlist(mu_x_params[1]); phi <- unlist(mu_x_params[2])
+  theta <- unlist(mu_x_params[2]); phi <- unlist(mu_x_params[1])
   sigma <- unlist(sigma_x_params[1])
   
   mean <- theta
@@ -75,10 +75,10 @@ gridMaker.PittMalikDoucet <- function(model_dynamics, N, K, R){
 }
 
 # Model of  Taylor (1986) with leverage effect
-gridMaker.TaylorWithLeverage <- function(model_dynamics, N, K, R){ 
+gridMaker.TaylorWithLeverage <- function(model_dynamics, N, K, R, ...){ 
   mu_x_params <- model_dynamics$mu_x_params
   sigma_x_params <- model_dynamics$sigma_x_params
-  theta <- unlist(mu_x_params[1]); phi <- unlist(mu_x_params[2])
+  theta <- unlist(mu_x_params[2]); phi <- unlist(mu_x_params[1])
   sigma <- unlist(sigma_x_params[1])
   
   mean <- theta
@@ -94,10 +94,10 @@ gridMaker.TaylorWithLeverage <- function(model_dynamics, N, K, R){
 }
 
 # Model of  Taylor (1986)
-gridMaker.Taylor <- function(model_dynamics, N, K, R){ 
+gridMaker.Taylor <- function(model_dynamics, N, K, R, ...){ 
   mu_x_params <- model_dynamics$mu_x_params
   sigma_x_params <- model_dynamics$sigma_x_params
-  theta <- unlist(mu_x_params[1]); phi <- unlist(mu_x_params[2])
+  theta <- unlist(mu_x_params[2]); phi <- unlist(mu_x_params[1])
   sigma <- unlist(sigma_x_params[1])
   
   mean <- theta
@@ -111,4 +111,3 @@ gridMaker.Taylor <- function(model_dynamics, N, K, R){
   jump_mid_points <- 0
   return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
 }
-

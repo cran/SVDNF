@@ -51,3 +51,4 @@ modelSim.dynamicsSVM <- function(dynamics, t, init_vol = 0.032, ...) {
   model_sim <- list(volatility_factor = x_vec, returns = y_vec)
   return(model_sim)
 }
+

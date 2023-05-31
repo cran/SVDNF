@@ -28,6 +28,7 @@ The \code{DNF} function applies the discrete nonlinear filter (DNF) of Kitagawa 
 \item{likelihoods}{Likelihood contribution at each time-step throughout the series.}
 \item{grids}{List of grids used for numerical integration by the DNF.}
 \item{dynamics}{The model dynamics used by the DNF.}
+\item{data}{The series of asset returns to which the DNF was applied.}
 
 }
 \references{
@@ -48,7 +49,7 @@ dnf_filter <- DNF(data = DuffiePanSingleton_sim$returns,
   dynamics = DuffiePanSingleton_mod) 
 
 # Print log-likelihood evaluation.
-dnf_filter$log_likelihood
+logLik(dnf_filter)
 
 # Using a custom model.
 # Here, we define the DuffiePanSingleton model as a custom model

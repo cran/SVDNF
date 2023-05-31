@@ -21,7 +21,7 @@ DNF.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = "Defa
   K <- length(grids$jump_mid_points)
 
   # Set a matrix to store the filtering distribution at each time step
-  filter_grid <- matrix(NA, nrow = N, ncol = T + 1)
+  filter_grid <- matrix(0, nrow = N, ncol = T + 1)
   filter_grid[(N:1), 1] <- rep(1 / N, times = N) # Uniform prior
 
   d_probs <- probCalculator(grids = grids, R = R, N = N, K = K, data = data, dynamics = dynamics)
@@ -32,9 +32,11 @@ DNF.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = "Defa
     probs <- Cpp_prodfun(d_probs[, t], filter_grid[(N:1), t]) # C++ function to multiply the previous filtering distribution with the appropriate probabilities.
     likelihoods[t] <- sum(probs)
     l = likelihoods[t]
+    
     # Get the posterior filtering distribution:
     if(is.na(l) | is.nan(l)){
-      return(list(log_likelihood = -Inf, filter_grid = filter_grid, likelihoods = likelihoods, grids = grids))
+      return(list(log_likelihood = -Inf, filter_grid = filter_grid,
+                  likelihoods = likelihoods, grids = grids, dynamics = dynamics))
     }
     if(l > 0){
       filter_grid[(N:1), t + 1] <- Cpp_rowSums_modN(probs, N) / l
@@ -47,7 +49,18 @@ DNF.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = "Defa
   log_likelihood <- sum(log(likelihoods))
 
   SVDNF <- list(log_likelihood = log_likelihood, filter_grid = filter_grid,
-                likelihoods = likelihoods, grids = grids, dynamics = dynamics)
+                likelihoods = likelihoods, grids = grids, dynamics = dynamics, data = data)
   class(SVDNF) = "SVDNF"
   return(SVDNF)
-  }
+}
+
+print.SVDNF <- function(x, ...){
+  cat("\nModel:\n")
+  cat(x$dynamics$model, '\n')
+  # MLE coefficient estimates
+  cat("\nLog-likelihood:\n")
+  print(x$log_likelihood)
+  cat("\n")
+  invisible(x)
+
+}
