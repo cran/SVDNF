@@ -1,7 +1,7 @@
 Package: SVDNF
 Type: Package
 Title: Discrete Nonlinear Filtering for Stochastic Volatility Models
-Version: 0.1.6
+Version: 0.1.7
 Authors@R: c(person("Louis", "Arsenault-Mahjoubi", role = c("aut", "cre"),
                       email = "larsenau@sfu.ca"),
                       person("Jean-François", "Bégin", role = "aut"),
@@ -20,6 +20,6 @@ Imports: Rcpp (>= 1.0.9), methods
 LinkingTo: Rcpp
 RoxygenNote: 7.2.3
 NeedsCompilation: yes
-Packaged: 2023-07-12 23:25:40 UTC; Louis
+Packaged: 2023-07-21 00:29:55 UTC; Louis
 Repository: CRAN
-Date/Publication: 2023-07-13 08:40:06 UTC
+Date/Publication: 2023-07-21 03:30:02 UTC

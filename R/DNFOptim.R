@@ -138,8 +138,7 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
       dynamics$delta <- delta
       dynamics$alpha <- alpha
       dynamics$rho <- rho
-      
-    }
+          }
     
     # Model of  Taylor (1986) with leverage effect
     else if  (model == "TaylorWithLeverage") {
@@ -388,6 +387,8 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
     dynamics$delta <- delta_MLE
     dynamics$alpha <- alpha_MLE
     dynamics$rho <- rho_MLE
+    
+    jump_params_list <- "p"
     
   }
   
