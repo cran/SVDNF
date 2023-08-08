@@ -251,42 +251,42 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
     }
     
     if(dynamics$delta < 0 |  dynamics$rho <= -1 |  dynamics$rho >= 1 |  dynamics$nu < 0){
-     LL <- -1e+308
+     LL <- -1e+150
       return(-LL)
     }
     if(any(dynamics$model == c("DuffiePanSingleton", "Bates", "Heston"))){
       if(theta <= 0){ 
-       LL <- -1e+308
+       LL <- -1e+150
         return(-LL)
       }
       if(kappa <= 0){ 
-       LL <- -1e+308
+       LL <- -1e+150
         return(-LL)
       }
       if(sigma <= 0){ 
-       LL <- -1e+308
+       LL <- -1e+150
         return(-LL)
       }
       if(dynamics$model != "Heston"){
         if(omega <= 0){
-         LL <- -1e+308
+         LL <- -1e+150
           return(-LL)
         }
       } 
     }
     if(any(dynamics$model == c("PittMalikDoucet", "TaylorWithLeverage", "Taylor"))){
       if(sigma <= 0){ 
-       LL <- -1e+308
+       LL <- -1e+150
         return(-LL)
       }
       if(dynamics$model == "PittMalikDoucet"){
         if(p <= 0 || p >= 1){
-         LL <- -1e+308
+         LL <- -1e+150
           return(-LL)
         }
       }
       if(phi <= 0 || phi >= 1){
-       LL <- -1e+308
+       LL <- -1e+150
         return(-LL)
       }
     }
@@ -298,8 +298,10 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
     LL <- DNF(data = data, N = N, K = K, R = R, dynamics = dynamics, grids = grids)$log_likelihood
     if (LL == Inf | LL == -Inf) {
       # There can be issues with unusual parameter combinations
-     LL <- -1e+308 # Need finite results
+      # Need finite difference for optim 
+     LL <- -1e+150 # Need finite results
     }
+
     return(-LL)
   }
   optimResults <- optim(fn = MLE_f, ...)
