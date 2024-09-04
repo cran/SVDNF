@@ -5,7 +5,7 @@ DNFOptim.default <- function(dynamics, ...){
   stop("This class of state-space models is not supported by the DNFOptim function.")
 }
 
-DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = "Default",
+DNFOptim.dynamicsSVM <- function(dynamics, data, par = NULL, factors = NULL, tol = Inf, N = 50, K = 20, R = 1, grids = "Default",
                      rho = 0, delta = 0, alpha = 0, rho_z = 0, nu = 0, jump_params_list = "dummy",
                      ...) {
   model <- dynamics$model
@@ -14,12 +14,24 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
   if(model == 'Custom'){
     mu_y <- dynamics$mu_y; sigma_y <- dynamics$sigma_y
     mu_x <- dynamics$mu_x; sigma_x <- dynamics$sigma_x
-    
+    coefs <- dynamics$coefs
     # Getting the arguments from drift/diffusion functions
     args_vec <- c(formalArgs(mu_y), formalArgs(sigma_y),
                   formalArgs(mu_x), formalArgs(sigma_x))
+    # Add coefficient names if given a factor model
+    if(!is.null(coefs)){
+      k <- length(coefs)  
+      
+      coef_names <- character(k)
+      
+      for (i in 0:(k - 1)) {
+        coef_names[i + 1] <- paste("c_", i, ":", sep = "")
+      }
+      args_vec <- c(coef_names, args_vec)
+    }
     # Adding possible parameters that aren't in the drift/diffusion
     # If set to "var", they will be optimized, or else they are fixed at given values.
+      
     if(rho == 'var'){
       args_vec <- c(args_vec, 'rho')
     }
@@ -161,6 +173,18 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
       dynamics$mu_x_params <- list(phi, theta)
       dynamics$sigma_x_params <- list(sigma)
     }
+    # CAPM with stochastic volatility
+    else if (model == "CAPM_SV") {
+      c_0 <- params[1]
+      c_1 <- params[2]
+      phi <- params[3]
+      theta <- params[4]
+      sigma <- params[5]
+      
+      dynamics$coefs <- c(c_0, c_1)
+      dynamics$mu_x_params <- list(phi, theta)
+      dynamics$sigma_x_params <- list(sigma)
+    }
     else if (model == "Custom") {
       # Checking if arguments are repeated in the the drift/diffusion/jumps functions:
       if(any(duplicated(args_vec))){
@@ -190,13 +214,17 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
           }
           params <- params2
         }
-        #}
       }
       # Getting number of parameters to go in each function
       # (note that we subtract one since x is an argument in each function,
       # but not a parameter that we should count).
       length_mu_y <- length(formals(mu_y)) - 1; length_sigma_y <- length(formals(sigma_y)) - 1
       length_mu_x <- length(formals(mu_x)) - 1; length_sigma_x <- length(formals(sigma_x)) - 1
+      length_coefs <- length(coefs)
+      if(!is.null(coefs)){
+        dynamics$coefs <- params[1:length_coefs]
+        params <- params[-1:-length_coefs]
+      }
       if(formalArgs(mu_y)[2] == "dummy"){
         mu_y_params <- list(0)
       }
@@ -274,7 +302,7 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
         }
       } 
     }
-    if(any(dynamics$model == c("PittMalikDoucet", "TaylorWithLeverage", "Taylor"))){
+    if(any(dynamics$model == c("PittMalikDoucet", "TaylorWithLeverage", "Taylor", "CAPM_SV"))){
       if(sigma <= 0){ 
        LL <- -1e+150
         return(-LL)
@@ -295,16 +323,34 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
       grids <- gridMaker(dynamics, R = R, N = N, K = K)
       
     }
-    LL <- DNF(data = data, N = N, K = K, R = R, dynamics = dynamics, grids = grids)$log_likelihood
+  
+    LL <- DNF(data = data, factors = factors, N = N, K = K, R = R, dynamics = dynamics, grids = grids)$log_likelihood
     if (LL == Inf | LL == -Inf) {
       # There can be issues with unusual parameter combinations
       # Need finite difference for optim 
      LL <- -1e+150 # Need finite results
     }
-
     return(-LL)
   }
-  optimResults <- optim(fn = MLE_f, ...)
+  if(is.null(par)){
+    cat("No initial parameters given. \n")
+    cat("Obtaining initial guess for starting parameters... \n")
+    par <- initGuess(dynamics, data, factors, N, K, R, grids)
+    cat("Intial par vector is: \n")
+    cat(par)
+  }
+  optimResults <- optim(fn = MLE_f, par = par, ...)
+  # Vector to store likelihoods
+  likelihoods <- c(-Inf, -optimResults$value)
+  i <- 1
+  while (likelihoods[i + 1] - likelihoods[i] > tol) {
+    init_par <- optimResults$par
+    optimResults <- optim(fn = MLE_f, par = init_par, ...)
+    likelihoods <- c(likelihoods, -optimResults$value)
+    
+    i <- i + 1
+  }
+  
   # Run DNF with optimal params: 
   params <- optimResults$par
   # Model from Duffie, Pan, and Singleton (2000):
@@ -415,6 +461,19 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
     dynamics$mu_x_params <- list(phi_MLE, theta_MLE)
     dynamics$sigma_x_params <- list(sigma_MLE)
   }
+  
+  # CAPM with stochastic volatility
+  else if (model == "CAPM_SV") {
+    c_0_MLE <- params[1]
+    c_1_MLE <- params[2]
+    phi_MLE <- params[3]
+    theta_MLE <- params[4]
+    sigma_MLE <- params[5]
+    
+    dynamics$coefs <- c(c_0_MLE, c_1_MLE)
+    dynamics$mu_x_params <- list(phi_MLE, theta_MLE)
+    dynamics$sigma_x_params <- list(sigma_MLE)
+  }
   else if (model == "Custom") {
     # Checking if arguments are repeated in the the drift/diffusion/jumps functions:
     if(any(duplicated(args_vec))){
@@ -444,13 +503,18 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
         }
         params <- params2
       }
-      #}
+     #}
     }
     # Getting number of parameters to go in each function
     # (note that we subtract one since x is an argument in each function,
     # but not a parameter that we should count).
     length_mu_y <- length(formals(mu_y)) - 1; length_sigma_y <- length(formals(sigma_y)) - 1
     length_mu_x <- length(formals(mu_x)) - 1; length_sigma_x <- length(formals(sigma_x)) - 1
+    length_coefs <- length(coefs)
+    if(!is.null(coefs)){
+      dynamics$coefs <- params[1:length_coefs]
+      params <- params[-1:-length_coefs]
+    }
     if(formalArgs(mu_y)[2] == "dummy"){
       mu_y_params <- list(0)
     }
@@ -503,7 +567,7 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, N = 50, K = 20, R = 1, grids = 
       dynamics$jump_params <- as.list(params)
     }
   }
-  DNF_MLE <- DNF(data = data, N = N, K = K, R = R, dynamics = dynamics, grids = grids)
+  DNF_MLE <- DNF(data = data, factors = factors, N = N, K = K, R = R, dynamics = dynamics, grids = grids)
   results <- list(optim = optimResults, SVDNF = DNF_MLE, 
              # Returns which variables are fixed and which are free (set to "var"):
              rho = rho, delta = delta, alpha = alpha,
@@ -519,7 +583,7 @@ print.DNFOptim <- function(x, digits = max(3, getOption("digits") - 3), ...){
   dynamics <- SVDNF$dynamics
   model <- dynamics$model
   
-  
+  coefs <- dynamics$coefs
   rho <- x$rho
   alpha <- x$alpha
   delta <- x$delta
@@ -556,9 +620,7 @@ print.DNFOptim <- function(x, digits = max(3, getOption("digits") - 3), ...){
   # Model of  Taylor (1986) with leverage effect
   else if  (model == "TaylorWithLeverage") {
     rho <- 'var'
-    
   }
-  
   jump_params_list <- x$jump_params_list
   
   # Making a list of the parameter names in the optimization: 
@@ -603,6 +665,16 @@ print.DNFOptim <- function(x, digits = max(3, getOption("digits") - 3), ...){
     dynamics$nu = nu
   }
   
+  if(!is.null(coefs)){
+    k <- length(coefs)  
+    
+    coef_names <- character(k)
+    
+    for (i in 0:(k - 1)) {
+      coef_names[i + 1] <- paste("c_", i, ":", sep = "")
+    }
+    args_vec <- c(coef_names, args_vec)
+  }
   args_vec <- c(args_vec, jump_params_list)
   
   args_vec <- args_vec[-which(args_vec == "dummy")]

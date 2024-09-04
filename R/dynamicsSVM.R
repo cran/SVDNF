@@ -2,7 +2,7 @@
 dynamicsSVM = function(mu = 0.038, kappa = 3.689, theta = 0.032,
                         sigma = 0.446, rho = -0.745, omega = 5.125, delta = 0.03, alpha = -0.014,
                         rho_z = -1.809, nu = 0.004, p = 0.01, phi = 0.965,
-                        h = 1 / 252, model = "Heston", mu_x, mu_y, sigma_x, sigma_y,
+                        h = 1 / 252, coefs = NULL, model = "Heston", mu_x, mu_y, sigma_x, sigma_y,
                         jump_dist = rpois, jump_density = dpois, jump_params = 0,
                         mu_x_params, mu_y_params, sigma_x_params, sigma_y_params){
   if(kappa < 0){ 
@@ -26,8 +26,8 @@ dynamicsSVM = function(mu = 0.038, kappa = 3.689, theta = 0.032,
   if(p < 0 || p > 1){
     stop("p must be between 0 and 1")
   }
-  if(phi < 0 || phi > 1){
-    stop("phi must be between 0 and 1")
+  if(phi < -1 || phi > 1){
+    stop("phi must be between -1 and 1")
   }
   
   # Defining drifts/diffusions and jump distribution for various models (ends at line 239):
@@ -215,7 +215,6 @@ dynamicsSVM = function(mu = 0.038, kappa = 3.689, theta = 0.032,
       mu_y_params = mu_y_params, sigma_y_params = sigma_y_params,
       mu_x_params = mu_x_params, sigma_x_params = sigma_x_params)
   }
-  
   # Model of  Taylor (1986)
   else if (model == "Taylor") {
     # Returns drift and diffusion
@@ -239,15 +238,48 @@ dynamicsSVM = function(mu = 0.038, kappa = 3.689, theta = 0.032,
     sigma_x_params <- list(sigma)
     
     model_dynamics <- list(model = model, mu_y = mu_y_taylor, sigma_y = sigma_y_taylor,
-      rho = 0, rho_z = 0, nu = 0, alpha = 0, delta = 0,
-      mu_x = mu_x_taylor, sigma_x = sigma_x_taylor,
-      mu_y_params = mu_y_params, sigma_y_params = sigma_y_params,
-      mu_x_params = mu_x_params, sigma_x_params = sigma_x_params)
+                           rho = 0, rho_z = 0, nu = 0, alpha = 0, delta = 0,
+                           mu_x = mu_x_taylor, sigma_x = sigma_x_taylor,
+                           mu_y_params = mu_y_params, sigma_y_params = sigma_y_params,
+                           mu_x_params = mu_x_params, sigma_x_params = sigma_x_params)
+  }
+  
+  # Capital Asset Pricing model with stochastic volatility
+  else if (model == "CAPM_SV") {
+    # Default regression coefficients:
+    if(is.null(coefs)){
+      coefs <- c(0,1)
+    }
+    # Returns drift and diffusion
+    mu_y_capm <- function(x, dummy) { # dummy is included to pass to do.call
+      return(0) # return a vector of zeroes with the length of x
+    }
+    mu_y_params <- list(0)
+    
+    sigma_y_capm <- function(x, dummy) { # dummy is included to pass to do.call
+      return(exp(x / 2))
+    }
+    sigma_y_params <- list(0)
+    # Volatility drift and diffusion
+    mu_x_capm <- function(x, phi, theta) {
+      return(theta + phi * (x - theta))
+    }
+    mu_x_params <- list(phi, theta)
+    sigma_x_capm <- function(x, sigma) {
+      return(sigma) # return a vector of sigmas with the length of x
+    }
+    sigma_x_params <- list(sigma)
+    
+    model_dynamics <- list(model = model, mu_y = mu_y_capm, sigma_y = sigma_y_capm,
+                           rho = 0, rho_z = 0, nu = 0, alpha = 0, delta = 0, coefs = coefs,
+                           mu_x = mu_x_capm, sigma_x = sigma_x_capm,
+                           mu_y_params = mu_y_params, sigma_y_params = sigma_y_params,
+                           mu_x_params = mu_x_params, sigma_x_params = sigma_x_params)
   }
   else if(model == 'Custom'){
     model_dynamics <- list(model = model, mu_y = mu_y, sigma_y = sigma_y,
       rho = rho, rho_z = rho_z, nu = nu, alpha = alpha, delta = delta,
-      mu_x = mu_x, sigma_x = sigma_x,
+      mu_x = mu_x, sigma_x = sigma_x, coefs = coefs,
       mu_y_params = mu_y_params, sigma_y_params = sigma_y_params,
       mu_x_params = mu_x_params, sigma_x_params = sigma_x_params,
       jump_dist = jump_dist, jump_params = jump_params, jump_density = jump_density)
@@ -272,9 +304,19 @@ print.dynamicsSVM <- function(x, ...){
   sigma_y_args <- sigma_y_args[-which(sigma_y_args == "x")]
   mu_x_args <- mu_x_args[-which(mu_x_args == "x")]
   sigma_x_args <- sigma_x_args[-which(sigma_x_args == "x")]
-  
-  cat("\nModel:\n")
-  cat(x$model, '\n')
+
+  if(!is.null(x$coefs)){
+    k <- length(x$coefs)  
+    
+    coef_names <- character(k)
+    
+    for (i in 0:(k - 1)) {
+      coef_names[i + 1] <- paste("c_", i, ":", sep = "")
+    }
+    
+    cat("\n Regression Coefficients:\n")
+    cat(rbind(coef_names, x$coefs), "\n")
+  }
   
   cat("\nReturn Drift Function:\n")
   cat(deparse(x$mu_y), "\n")

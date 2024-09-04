@@ -1,48 +1,81 @@
 # Run help(plot.SVDNF) for description and argument details.
 plot.SVDNF <- function(x, lower_p = 0.05, upper_p = 0.95, 
-                       tlim = "default", location = 'topright', ...) {
-  # Extract grids from x
-  var_mid_points <- x$grids$var_mid_points
-  jump_mid_points <- x$grids$jump_mid_points
-  j_num <- x$grids$j_nums
+                       tlim = "default", type = 'l',
+                       location = 'topright', 
+                        ...) {
   
-  # Extract dynamics from x
-  dynamics = x$dynamics
-  # Define N, K, and R from grids
-  N <- length(var_mid_points); K <- length(jump_mid_points); R <- max(j_num)
-  
-  # Filtering distribution from the DNF and length of the series
+  # Length of the series
   filtering <- x$filter_grid
-  T <- dim(filtering)[2]-1 # remove one as filtering from t = 0 ,..., t = T
+  T <- ncol(x$filter_grid)-1 # remove one as filtering from t = 0 ,..., t = T
   
-  NNKR_grid <- expand.grid(var_mid_points,var_mid_points, jump_mid_points, j_num)
-  v_t = unlist(NNKR_grid[1]); v_tmin1 <- unlist(NNKR_grid[2]); j_mt <- unlist(NNKR_grid[3]); j_nums <- unlist(NNKR_grid[4])
-  
-  # Transition probabilities : 
-  p_v <- dnorm(v_t, do.call(dynamics$mu_x, c(list(v_tmin1), dynamics$mu_x_params)), sd = do.call(dynamics$sigma_x, c(list(v_tmin1), dynamics$sigma_x_params)))
-  
-  p_n <- 1 # default value of 1, if there are no jumps in the model
-  p_j_vol <- 1 # default value of 1, if there are no volatility jumps in the model
-  
-  if (any(j_nums != 0)) { # If there are no jumps, leave jump_mat = 1.
-    # Probability of having j_nums jumps
-    p_n <- do.call(dynamics$jump_density, c(list(j_nums), dynamics$jump_params))
-  }
-  
-  if (any(jump_mid_points != 0)) {
-    # Probability of having jumps of certain size within the jump interval grid.
-    p_j_vol <- dgamma(j_mt, shape = j_nums, scale = dynamics$nu)
-  }
-  
-  Transition <- p_v * p_n * p_j_vol
-  #Sum across jump size:
-  Transition <- rowSums(matrix(Transition, nrow = N * N * (R + 1), ncol = K, byrow = F))
-  #Sum across jump number:
-  Transition <- rowSums(matrix(Transition, nrow = N * N, ncol = R + 1, byrow = F))
-  Transition <- matrix(Transition, nrow = N, ncol = N) 
+    if(any(is.character(tlim)) & all(tlim != "default")){
+      indices <- which(index(x$data) %in% index(x$data[tlim]))
+      if(length(indices) > 1){
+      tlim <- c(indices[1], indices[length(indices)])
+      }
+      else{
+        tlim <- indices
+      }
+    }
   
   # If only one number for tlim is given, plot entire density
   if((length(tlim) == 1) && tlim != 'default'){
+    # Extract grids from x
+    var_mid_points <- x$grids$var_mid_points
+    jump_mid_points <- x$grids$jump_mid_points
+    j_num <- x$grids$j_nums
+    
+    # Expand grids
+    NNKR_grid <- expand.grid(var_mid_points,var_mid_points, jump_mid_points, j_num)
+    v_t = unlist(NNKR_grid[1]); v_tmin1 <- unlist(NNKR_grid[2]); j_mt <- unlist(NNKR_grid[3]); j_nums <- unlist(NNKR_grid[4])
+    
+    
+    # Extract dynamics from x
+    dynamics = x$dynamics
+    # Define N, K, and R from grids
+    N <- length(var_mid_points); K <- length(jump_mid_points); R <- max(j_num)
+    
+    # Filtering distribution from the DNF and length of the series
+    filtering <- x$filter_grid
+    T <- ncol(filtering)-1
+    
+    # Transition probabilities : 
+    p_v <- dnorm(v_t, do.call(dynamics$mu_x, c(list(v_tmin1), dynamics$mu_x_params)), sd = do.call(dynamics$sigma_x, c(list(v_tmin1), dynamics$sigma_x_params)))
+    
+    p_n <- 1 # default value of 1, if there are no jumps in the model
+    p_j_vol <- 1 # default value of 1, if there are no volatility jumps in the model
+    
+    if (any(j_nums != 0)) { # If there are no jumps, leave jump_mat = 1.
+      # Probability of having j_nums jumps
+      p_n <- do.call(dynamics$jump_density, c(list(j_nums), dynamics$jump_params))
+    }
+    
+    if (any(jump_mid_points != 0)) {
+      # Probability of having jumps of certain size within the jump interval grid.
+      p_j_vol <- dgamma(j_mt, shape = j_nums, scale = dynamics$nu)
+    }
+    
+    Transition <- p_v * p_n * p_j_vol
+    #Sum across jump size:
+    Transition <- rowSums(matrix(Transition, nrow = N * N * (R + 1), ncol = K, byrow = F))
+    #Sum across jump number:
+    Transition <- rowSums(matrix(Transition, nrow = N * N, ncol = R + 1, byrow = F))
+    Transition <- matrix(Transition, nrow = N, ncol = N) 
+    
+    # Extract grids from x
+    var_mid_points <- x$grids$var_mid_points
+    jump_mid_points <- x$grids$jump_mid_points
+    j_num <- x$grids$j_nums
+    
+    # Extract dynamics from x
+    dynamics = x$dynamics
+    # Define N, K, and R from grids
+    N <- length(var_mid_points); K <- length(jump_mid_points); R <- max(j_num)
+    
+    # Filtering distribution from the DNF and length of the series
+    filtering <- x$filter_grid
+    T <- dim(filtering)[2]-1
+    
     # Var intervals
     var_intervals <- c(var_mid_points[1] - (var_mid_points[2] - var_mid_points[1]), var_mid_points, Inf)
     var_intervals <- (var_intervals[1:(N + 1)] + var_intervals[2:(N + 2)]) / 2
@@ -51,7 +84,6 @@ plot.SVDNF <- function(x, lower_p = 0.05, upper_p = 0.95,
     lengths[N] = Inf
     
     # Adjust by lengths to get the height of the density within the intervals
-    #pred <- ((filtering[N:1,tlim - 1] %*% t(Transition)) /lengths)
     pred <- (filtering[N:1,tlim -1] /lengths) %*% t(Transition)
     # Normalizing constant
     filtering_constant <- sum(filtering[N:1,tlim]/lengths)
@@ -68,62 +100,52 @@ plot.SVDNF <- function(x, lower_p = 0.05, upper_p = 0.95,
            lty = c(2, 1))
   }
   else{
-  pred <- matrix(NA, nrow = N, ncol = T)
-  # Compute the prediction distribution at each step 
-  for(i in (1:T)){
-  pred[N:1,i] <- (x$filter_grid[N:1,i]) %*% t(Transition)
-  }
-  
-  filtering_CDF <- filtering
-  pred_CDF <- pred
-  
+  # x-axis imits for default and xts cases
   if (any(tlim == "default")){
-    tlim <- c(1:T)
+    tlim <-c(1:T)
+
+    if(is.xts(x$data)){
+      # Extract returns to run DNF with
+      x_axis <- index(x$data)
+    }
+    else{
+      x_axis <- c(1:T)
+    }
   }
   else{
-    tlim <- c(tlim[1]:tlim[2])
-  }
-  # Compute the volatility's CDF at each time point from the filtering distribution
-  for (i in (2:N)) {
-    filtering_CDF[i, ] <- filtering_CDF[(i - 1), ] + filtering[i, ]
-    pred_CDF[i, ] <- pred_CDF[(i - 1), ] + pred[i, ]
-  }
-  # Normalize so the CDF sums to 1
-  filtering_CDF <- filtering_CDF %*% diag(1 / filtering_CDF[N, ])
-  pred_CDF <- pred_CDF %*% diag(1 / pred_CDF[N, ])
-  
-  # Function to find the percentiles that we want to plot
-  percentiles <- function(p, CDF, nodes) {
-    per_vec <- c()
-    T <- dim(CDF)[2]
-    N <- dim(CDF)[1]
-    for (i in (1:T)) {
-      per_vec <- c(per_vec, nodes[N - which((CDF[, i]) > p)[1] + 1])
+    if(is.xts(x$data)){
+      # Extract returns to run DNF with
+      x_axis <- index(x$data)[tlim[1]:tlim[2]]
     }
-    return(per_vec)
+    else{
+      x_axis <- c(tlim[1]:tlim[2])
+    } 
+    tlim <- c(tlim[1]:tlim[2])
+    
   }
   
   # Obtain the median, lower and upper percentiles of the filtering distribution
-  p_medians <- percentiles(p = 0.5, CDF = filtering_CDF, var_mid_points)[2:(T+1)]
-  p_upper <- percentiles(p = upper_p, CDF = filtering_CDF, var_mid_points)[2:(T+1)]
-  p_lower <- percentiles(p = lower_p, CDF = filtering_CDF, var_mid_points)[2:(T+1)]
-
+  p_medians <-  extractVolPerc(x, p = 0.5)[2:(T+1)]
+  p_upper <-  extractVolPerc(x, p = upper_p)[2:(T+1)]
+  p_lower <-  extractVolPerc(x, p = lower_p)[2:(T+1)]  
+  
   # Obtain the median, lower and upper percentiles of the prediction distribution
-  p_medians_pred <- percentiles(p = 0.5, CDF = pred_CDF, var_mid_points)[1:T]
-  p_upper_pred <- percentiles(p = upper_p, CDF = pred_CDF, var_mid_points)[1:T]
-  p_lower_pred <- percentiles(p = lower_p, CDF = pred_CDF, var_mid_points)[1:T]
+  p_medians_pred <-  extractVolPerc(x, p = 0.5, pred = T)[1:T]
+  p_upper_pred <-  extractVolPerc(x, p = upper_p, pred = T)[1:T]
+  p_lower_pred <-  extractVolPerc(x, p = lower_p, pred = T)[1:T]
   
   # Plot the median filtering distribution and add the lower/upper percentiles
-  plot(y = p_medians_pred[tlim], x = tlim,
-       main = "Plot of Prediction Distribution Percentiles", ...)
-  points(p_upper_pred[tlim], x = tlim, type = "l", col = "grey", lty = 2)
-  points(p_lower_pred[tlim], x = tlim, type = "l", col = "grey", lty = 2)
+  plot(y = p_medians_pred[tlim], x = x_axis,
+       main = "Plot of Prediction Distribution Percentiles", 
+       type = type, ...)
+  points(p_upper_pred[tlim], x = x_axis, type = "l", col = "grey", lty = 2)
+  points(p_lower_pred[tlim], x = x_axis, type = "l", col = "grey", lty = 2)
   
   # Plot the median filtering distribution and add the lower/upper percentiles
-  plot(y = p_medians[tlim], x = tlim,
+  plot(y = p_medians[tlim], x = x_axis, type = type, 
        main = "Plot of Filtering Distribution Percentiles", ...)
-  points(p_upper[tlim], x = tlim, type = "l", col = "grey", lty = 2)
-  points(p_lower[tlim], x = tlim, type = "l", col = "grey", lty = 2)
+  points(p_upper[tlim], x = x_axis, type = "l", col = "grey", lty = 2)
+  points(p_lower[tlim], x = x_axis, type = "l", col = "grey", lty = 2)
   }
 }
 
@@ -244,6 +266,16 @@ summary.DNFOptim <- function(object, confidence = 0.95, ...){
   args_vec <- args_vec[-which(args_vec == "dummy")]
   args_vec <- args_vec[-which(args_vec == "x")]
   args_vec <- unique(args_vec)
+  if(!is.null(dynamics$coefs)){
+    k <- length(dynamics$coefs)  
+    
+    coef_names <- character(k)
+    
+    for (i in 0:(k - 1)) {
+      coef_names[i + 1] <- paste("c_", i, ":", sep = "")
+    }
+    args_vec <- c(coef_names, args_vec)
+  }
   # Check if the Hessian is invertible
   possibleError <- tryCatch(
     solve(optim$hessian),
@@ -283,12 +315,8 @@ summary.DNFOptim <- function(object, confidence = 0.95, ...){
   dimnames(tab) <- list(args_vec)
   colnames(tab) <- list("Estimate", "Std Error", lower_percentage, upper_percentage)  
   }
-  #str = paste('Model:', object$SVDNF$dynamics$model, "\n")
-  #cat(str)
-  res = list(model =  object$SVDNF$dynamics$model, coefficients = tab,
-             logLik = logLik(object))
- # model_dynamics <- c(paste("Model:", object$SVDNF$dynamics$model)) 
-  #cat("Coefficients: \n")
+
+  res = list(model =  object$SVDNF$dynamics$model, coefficients = tab, logLik = logLik(object))
   class(res) <- "summary.DNFOptim"
   res
 }
@@ -307,8 +335,36 @@ print.summary.DNFOptim <- function(x, digits = max(3, getOption("digits") - 3), 
 }
 
 #Predict method for DNFOptim objects. See help(predict.DNFOptim) for more details.
-predict.DNFOptim <- function(object, n_ahead = 15, n_sim = 1000, confidence = 0.95, ...){
+predict.DNFOptim <- function(object, n_ahead = 15, new_data = NULL, n_sim = 1000, confidence = 0.95, ...){
   dynamics <- object$SVDNF$dynamics
+  coefs <- dynamics$coefs
+  fac_dim <- length(coefs)
+  # expected returns from factors
+  exp_ret <- 0
+  if(!is.null(new_data)){
+    # Check if the model has coefficients for the new factors data
+    if(is.null(coefs)){
+      stop("You passed new factor/explanatory variables values, but the model dynamics do not have slope coefficients for the predictors. Use the n_ahead argument to make forecasts for models without factors.")
+    }
+  }
+  if(!is.null(coefs)){
+    if(is.null(new_data)){
+      print("The model dynamics contain factor regression slope coefficients, but no new factors value are given for the prediction. Factor value are assumed to be zero in this prediction.")
+      new_data <- matrix(0, nrow = length(coefs), ncol = n_ahead)
+    }
+  }
+  
+  if(!is.null(new_data)){
+    if(fac_dim != nrow(new_data)){
+      new_data <- t(new_data)
+    }
+    if(fac_dim != nrow(new_data)){
+      # Check that factors has the correct dimensions.
+      stop("Your factor/new_data matrix has incorrect dimensions. Verify that either its rows or columns match the number of factor coefficients in your model.")
+    }
+    n_ahead <- ncol(new_data)
+    exp_ret <- t(as.matrix(coefs)) %*% new_data
+  }
   
   if(confidence <=0 | confidence >=1){
     stop("Confidence should be between 0 and 1.")
@@ -323,6 +379,7 @@ predict.DNFOptim <- function(object, n_ahead = 15, n_sim = 1000, confidence = 0.
   T <- length(object$SVDNF$likelihoods)
   final_filtering <- object$SVDNF$filter_grid[,T]
   N <- length(object$SVDNF$grids$var_mid_points)
+  
   # Sampling volatilities from the time T filtering distribution:
   inits_samp <- sample(x = var_mid_points, size = n_sim, replace = TRUE,
                            prob = final_filtering[N:1])
@@ -338,6 +395,7 @@ predict.DNFOptim <- function(object, n_ahead = 15, n_sim = 1000, confidence = 0.
   
   ret_sim <- pred_sim[2,]
   ret_means <- sapply((1:n_ahead), function(i) mean(sapply(ret_sim, "[[", i)))
+  ret_means <- exp_ret + ret_means
   ret_sd <- sapply((1:n_ahead), function(i) sd(sapply(ret_sim, "[[", i)))
   
   # 95% confidence intervals
@@ -409,7 +467,7 @@ print.predict.DNFOptim <- function(x, digits = max(3, getOption("digits") - 3), 
 }
 
 plot.predict.DNFOptim <- function(x, ...){
-  rets <- x$object$SVDNF$data
+  rets <- coredata(x$object$SVDNF$data)
   threshold <- length(rets)
   n_ahead <- length(x$ret_pred$mean_ret_pred)
   
@@ -421,35 +479,31 @@ plot.predict.DNFOptim <- function(x, ...){
   LB_ret <- x$ret_pred$LB_ret
   ret_means <- x$ret_pred$mean_ret_pred
   
-  filtering <- x$object$SVDNF$filter_grid
-  filtering_CDF <- filtering
-
   var_mid_points <- x$object$SVDNF$grids$var_mid_points
   N <- length(var_mid_points )
   T <- length(rets)
   tlim <- c(1:length(T))
-  # Compute the volatility's CDF at each time point from the filtering distribution
-  for (i in (2:N)) {
-    filtering_CDF[i, ] <- filtering_CDF[(i - 1), ] + filtering[i, ]
-  }
-  # Normalize so the CDF sums to 1
-  filtering_CDF <- filtering_CDF %*% diag(1 / filtering_CDF[N, ])
+ 
+   vol_filt <-  extractVolPerc(x$object$SVDNF, p = 0.5)[2:(T+1)]
+  
 
-  # Function to find the percentiles that we want to plot
-  percentiles <- function(p, CDF, nodes) {
-    per_vec <- c()
-    T <- dim(CDF)[2]
-    N <- dim(CDF)[1]
-    for (i in (1:T)) {
-      per_vec <- c(per_vec, nodes[N - which((CDF[, i]) > p)[1] + 1])
-    }
-    return(per_vec)
+  
+  data <- x$object$SVDNF$data
+  if(is.xts(data)){
+    # getting dates for entire prediction
+    data_periodicity <- unclass(periodicity(data))$label
+    
+    
+    end_date <- seq(as.Date(end(data)),
+                    by = data_periodicity,
+                    length.out = (n_ahead+1))[-1] 
+    x_seq <- c(index(data), end_date)
+    
+  }
+  else{
+    x_seq = seq(from = 1, to = (threshold+n_ahead), by = 1)
   }
   
-  
-  vol_filt <- percentiles(p = 0.5, CDF = filtering_CDF, var_mid_points)[2:(T+1)]
-
-  x_seq = seq(from = 1, to = (threshold+n_ahead), by = 1)
   y = c(vol_filt, vol_means)
   v_ylim <- c(min(LB_vol, vol_filt), max(UB_vol, vol_filt))
   # Initialize the plot
@@ -462,10 +516,10 @@ plot.predict.DNFOptim <- function(x, ...){
   segments(x_seq[(threshold+1):(length(x_seq)-1)], y[(threshold+1):(length(y)-1)], x_seq[(threshold+2):length(x_seq)], y[(threshold+2):length(y)], col = "magenta")
    
   # Plot the lower confidence interval after the threshold in blue
-  lines(threshold+(1:n_ahead), LB_vol, col = "blue")
+  lines(x_seq[threshold+(1:n_ahead)], LB_vol, col = "blue")
 
   # Plot the upper confidence interval after the threshold in blue
-  lines(threshold+(1:n_ahead), UB_vol, col = "blue")
+  lines(x_seq[threshold+(1:n_ahead)], UB_vol, col = "blue")
 
   y = c(rets, ret_means)
   r_ylim <- c(min(c(LB_ret, rets)), max(c(UB_ret, rets)))
@@ -480,16 +534,43 @@ plot.predict.DNFOptim <- function(x, ...){
   segments(x_seq[(threshold+1):(length(x_seq)-1)], y[(threshold+1):(length(y)-1)], x_seq[(threshold+2):length(x_seq)], y[(threshold+2):length(y)], col = "magenta")
 
   # Plot the lower confidence interval after the threshold in blue
-  lines(threshold+(1:n_ahead), LB_ret, col = "blue")
+  lines(x_seq[threshold+(1:n_ahead)], LB_ret, col = "blue")
 
   # Plot the upper confidence interval after the threshold in blue
-  lines(threshold+(1:n_ahead), UB_ret, col = "blue")
+  lines(x_seq[threshold+(1:n_ahead)], UB_ret, col = "blue")
 }
 
 #Predict method for DNFOptim objects. See help(predict.DNFOptim) for more details.
-predict.SVDNF <- function(object, n_ahead = 15, n_sim = 1000,
-                          confidence = 0.95, ...){
+predict.SVDNF <- function(object, n_ahead = 15, new_data = NULL, n_sim = 1000
+                          , confidence = 0.95, ...){
   dynamics <- object$dynamics
+  coefs <- dynamics$coefs
+  # expected returns from factors
+  exp_ret <- 0
+  if(!is.null(new_data)){
+    # Check if the model has coefficients for the new factors data
+    if(is.null(coefs)){
+      stop("You passed new factor/explanatory variables values, but the model dynamics do not have slope coefficients for the predictors. Use the n_ahead argument to make forecasts for models without factors.")
+    }
+  }
+  if(!is.null(coefs)){
+    if(is.null(new_data)){
+      print("The model dynamics contain factor regression slope coefficients, but no new factors value are given for the prediction. Factor value are assumed to be zero in this prediction.")
+      new_data <- matrix(0, nrow = length(coefs), ncol = n_ahead)
+    }
+  }
+  fac_dim <- length(coefs)
+  if(!is.null(new_data)){
+    if(fac_dim != nrow(new_data)){
+      new_data <- t(new_data)
+    }
+    if(fac_dim != nrow(new_data)){
+      # Check that factors has the correct dimensions.
+      stop("Your factor/new_data matrix has incorrect dimensions. Verify that either its rows or columns match the number of factor coefficients in your model.")
+    }
+    n_ahead <- ncol(new_data)
+    exp_ret <- t(as.matrix(dynamics$coefs)) %*% new_data
+  }
   
   if(confidence <=0 | confidence >=1){
     stop("Confidence should be between 0 and 1.")
@@ -523,6 +604,7 @@ predict.SVDNF <- function(object, n_ahead = 15, n_sim = 1000,
   
   ret_sim <- pred_sim[2,]
   ret_means <- sapply((1:n_ahead), function(i) mean(sapply(ret_sim, "[[", i)))
+  ret_means <- exp_ret + ret_means
   ret_sd <- sapply((1:n_ahead), function(i) sd(sapply(ret_sim, "[[", i)))
   
   # 95% confidence intervals
@@ -536,9 +618,8 @@ predict.SVDNF <- function(object, n_ahead = 15, n_sim = 1000,
   
   ret_pred <- list(UB_ret = UB_ret, mean_ret_pred = ret_means,
                    LB_ret = LB_ret)
-  
-  pred <- list(volatility_pred = volatility_pred, ret_pred = ret_pred,
-               object = object, confidence = confidence)
+ 
+   pred <- list(volatility_pred = volatility_pred, ret_pred =     ret_pred, object = object, confidence = confidence)
   class(pred) <- "predict.SVDNF"
   pred
 }
@@ -596,7 +677,7 @@ print.predict.SVDNF <- function(x, digits = max(3, getOption("digits") - 3), lim
 }
 
 plot.predict.SVDNF <- function(x, ...){
-  rets <- x$object$data
+  rets <- coredata(x$object$data)
   threshold <- length(rets)
   n_ahead <- length(x$ret_pred$mean_ret_pred)
   
@@ -608,35 +689,28 @@ plot.predict.SVDNF <- function(x, ...){
   LB_ret <- x$ret_pred$LB_ret
   ret_means <- x$ret_pred$mean_ret_pred
   
-  filtering <- x$object$filter_grid
-  filtering_CDF <- filtering
-  
   var_mid_points <- x$object$grids$var_mid_points
   N <- length(var_mid_points )
   T <- length(rets)
-  tlim <- c(1:length(T))
-  # Compute the volatility's CDF at each time point from the filtering distribution
-  for (i in (2:N)) {
-    filtering_CDF[i, ] <- filtering_CDF[(i - 1), ] + filtering[i, ]
-  }
-  # Normalize so the CDF sums to 1
-  filtering_CDF <- filtering_CDF %*% diag(1 / filtering_CDF[N, ])
   
-  # Function to find the percentiles that we want to plot
-  percentiles <- function(p, CDF, nodes) {
-    per_vec <- c()
-    T <- dim(CDF)[2]
-    N <- dim(CDF)[1]
-    for (i in (1:T)) {
-      per_vec <- c(per_vec, nodes[N - which((CDF[, i]) > p)[1] + 1])
+  #vol_filt <- percentiles(p = 0.5, CDF = filtering_CDF, var_mid_points)[2:(T+1)]
+  vol_filt <- extractVolPerc(x$object, p = 0.5)[2:(T+1)]
+  data <- x$object$data
+  if(is.xts(data)){
+    # getting dates for entire prediction
+    data_periodicity <- unclass(periodicity(data))$label
+    
+    
+    end_date <- seq(as.Date(end(data)),
+                    by = data_periodicity,
+                    length.out = (n_ahead+1))[-1] 
+    x_seq <- c(index(data), end_date)
+    
     }
-    return(per_vec)
+  else{
+  x_seq = seq(from = 1, to = (threshold+n_ahead), by = 1)
   }
   
-  
-  vol_filt <- percentiles(p = 0.5, CDF = filtering_CDF, var_mid_points)[2:(T+1)]
-  
-  x_seq = seq(from = 1, to = (threshold+n_ahead), by = 1)
   y = c(vol_filt, vol_means)
   v_ylim <- c(min(c(LB_vol, vol_filt)), max(c(UB_vol, vol_filt)))
   # Initialize the plot
@@ -649,10 +723,10 @@ plot.predict.SVDNF <- function(x, ...){
   segments(x_seq[(threshold+1):(length(x_seq)-1)], y[(threshold+1):(length(y)-1)], x_seq[(threshold+2):length(x_seq)], y[(threshold+2):length(y)], col = "magenta")
   
   # Plot the lower confidence interval after the threshold in blue
-  lines(threshold+(1:n_ahead), LB_vol, col = "blue")
+  lines(x_seq[threshold+(1:n_ahead)], LB_vol, col = "blue")
   
   # Plot the upper confidence interval after the threshold in blue
-  lines(threshold+(1:n_ahead), UB_vol, col = "blue")
+  lines(x_seq[threshold+(1:n_ahead)], UB_vol, col = "blue")
   
   y = c(rets, ret_means)
   r_ylim <- c(min(c(LB_ret, rets)), max(c(UB_ret, rets)))
@@ -667,10 +741,10 @@ plot.predict.SVDNF <- function(x, ...){
   segments(x_seq[(threshold+1):(length(x_seq)-1)], y[(threshold+1):(length(y)-1)], x_seq[(threshold+2):length(x_seq)], y[(threshold+2):length(y)], col = "magenta")
   
   # Plot the lower confidence interval after the threshold in blue
-  lines(threshold+(1:n_ahead), LB_ret, col = "blue")
+  lines(x_seq[threshold+(1:n_ahead)], LB_ret, col = "blue")
   
   # Plot the upper confidence interval after the threshold in blue
-  lines(threshold+(1:n_ahead), UB_ret, col = "blue")
+  lines(x_seq[threshold+(1:n_ahead)], UB_ret, col = "blue")
 }
 
-
+ 

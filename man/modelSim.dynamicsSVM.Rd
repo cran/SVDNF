@@ -12,7 +12,7 @@ The \code{modelSim} function generates returns and variances for a wide class of
 \method{modelSim}{dynamicsSVM}(dynamics, t, init_vol = 0.032, ...)
 }
 \arguments{
- \item{dynamics}{A dynamicsSVM object representing the model dynamics to be used for simulating data.}
+ \item{dynamics}{A \code{dynamicsSVM} object representing the model dynamics to be used for simulating data.}
  \item{t}{Number of observations to be simulated.}
  \item{init_vol}{Initial value of the volatility factor (e.i., value of \code{x_0}).}
   \item{...}{Further arguments passed to or from other methods.}

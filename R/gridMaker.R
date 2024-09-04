@@ -111,3 +111,22 @@ gridMaker.Taylor <- function(model_dynamics, N, K, R, ...){
   jump_mid_points <- 0
   return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
 }
+
+# CAPM with SV
+gridMaker.CAPM_SV <- function(model_dynamics, N, K, R, ...){ 
+  mu_x_params <- model_dynamics$mu_x_params
+  sigma_x_params <- model_dynamics$sigma_x_params
+  theta <- unlist(mu_x_params[2]); phi <- unlist(mu_x_params[1])
+  sigma <- unlist(sigma_x_params[1])
+  
+  mean <- theta
+  sd <- sqrt((sigma^2) / (1 - phi^2))
+  
+  # One node point at the mean and floor(N/2) points on each side
+  var_mid_points <- seq(from = 0, to = sqrt((3 + log(N)) * sd), length = floor(N / 2 + 1))^2
+  # Pick the first N points (or else some grids generated this way have N+1 points)
+  var_mid_points <- (sort(c(-var_mid_points[2:N], var_mid_points)) + mean)[1:N]
+  j_nums <- 0
+  jump_mid_points <- 0
+  return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))
+}

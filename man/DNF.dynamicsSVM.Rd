@@ -9,12 +9,13 @@ Discrete Nonlinear Filtering Algorithm for Stochastic Volatility Models
 The \code{DNF} function applies the discrete nonlinear filter (DNF) of Kitagawa (1987) as per the implementation of Bégin & Boudreault (2020) to obtain likelihood evaluations and filtering distribution estimates for a wide class of stochastic volatility models.
 }
 \usage{
-\method{DNF}{dynamicsSVM}(dynamics, data, N = 50, K = 20, R = 1, grids, ...)
+\method{DNF}{dynamicsSVM}(dynamics, data, factors = NULL, N = 50, K = 20, R = 1, grids, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 \item{dynamics}{A dynamicsSVM object representing the model dynamics to be used by the DNF.}
-\item{data}{A series of asset returns for which we want to run the DNF.}
+\item{data}{A series of asset returns for which we want to run the DNF. This should be a vector or an \code{xts} object.}
+\item{factors}{Series of values taken by \code{d} explanatory variables. This should be a matrix or an \code{xts} object with \code{d} rows and \code{T} columns.}
 \item{N}{Number of nodes in the variance grid.}
 \item{K}{Number of nodes in the jump size grid.}
 \item{R}{Maximum number of jumps used in the numerical integration at each timestep.} 

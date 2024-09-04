@@ -25,14 +25,12 @@ Returns the summary of the output of a \code{DNFOptim} object.
 Returns a list with the model used and its estimated parameters.
   \item{model}{The model that was estimated with the \code{DNFOptim} object.}
   \item{coefficients}{Table with the maximum likelihood parameters estimates. If \code{hessian = TRUE} was set in the \code{DNFOptim} function, standard errors and 95\% confidence intervals are given. Then, the table has the following columns:
-    \itemize{
-      \item{Estimate}{ The parameter estimate.}
-      \item{Std Error}{ The standard error of the estimate.}
-      \item{Lower Bound}{ The lower bound of the confidence interval.}
-      \item{Upper Bound}{ The upper bound of the confidence interval.}
-    }}
+     (1) \code{Estimate}: the parameter estimate,
+     (2) \code{Std Error}: the standard error of the estimate,
+      (3) \code{Lower Bound}: the lower bound of the confidence interval, and
+     (4) \code{Upper Bound}:The upper bound of the confidence interval.
+    }
 \item{logLik}{Log-likelihood value at the parameter maximum likelihood estimates and the model's degrees of freedom}
-
 }
 
 \examples{

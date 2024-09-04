@@ -10,7 +10,7 @@ Stochastic Volatility Models Dynamics
 \usage{
 dynamicsSVM(mu = 0.038, kappa = 3.689, theta = 0.032, sigma = 0.446,
 rho = -0.745, omega = 5.125, delta = 0.03, alpha = -0.014,
-rho_z = -1.809, nu = 0.004, p = 0.01, phi = 0.965, h = 1/252,
+rho_z = -1.809, nu = 0.004, p = 0.01, phi = 0.965, h = 1/252, coefs = NULL,
 model = "Heston", mu_x, mu_y, sigma_x, sigma_y,
 jump_dist = rpois, jump_density = dpois, jump_params = 0,
 mu_x_params, mu_y_params, sigma_x_params, sigma_y_params)
@@ -30,7 +30,8 @@ mu_x_params, mu_y_params, sigma_x_params, sigma_y_params)
  \item{p}{Jump probability for models with Bernoulli jumps.}
  \item{phi}{Volatility persistence parameter.}
  \item{h}{Time interval between observations (e.g., \code{h = 1/252} for daily data).}
- \item{model}{Model used by the discrete nonlinear filter. The options are \code{"Heston"},    \code{"Bates"}, \code{"DuffiePanSingleton"}, \code{"Taylor"}, \code{"TaylorWithLeverage"}, \cr  \code{"PittMalikDoucet"}, and \code{"Custom"}. If \code{model = "Custom"}, users should pass the drift  functions (i.e., \code{mu_x} and \code{mu_y}), the diffusion functions (i.e., \code{sigma_x} and  \code{sigma_y}), and the jump distribution, (i.e., \code{jump_dist}) as well as their parameters to the \code{DNF} function. See Examples.}
+ \item{coefs}{Vector of regression coefficients for factor stochastic volatility models. This vector should be of the same lenght as the number of explanatory variables provided.}
+ \item{model}{Model used by the discrete nonlinear filter. The options are \code{"Heston"},    \code{"Bates"}, \code{"DuffiePanSingleton"}, \code{"Taylor"}, \code{"TaylorWithLeverage"}, \cr  \code{"PittMalikDoucet"}, \code{"CAPM_SV"} and \code{"Custom"}. If \code{model = "Custom"}, users should pass the drift  functions (i.e., \code{mu_x} and \code{mu_y}), the diffusion functions (i.e., \code{sigma_x} and  \code{sigma_y}), and the jump distribution, (i.e., \code{jump_dist}) as well as their parameters to the \code{dynamicsSVM} function. See Examples.}
  \item{mu_x}{Function for variance drift (to be used with a custom model).}
  \item{mu_y}{Function for returns drift (to be used with a custom model).}
  \item{sigma_x}{Function for variance diffusion (to be used with a custom model).}
