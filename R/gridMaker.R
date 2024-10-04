@@ -23,7 +23,7 @@ gridMaker.DuffiePanSingleton <- function(model_dynamics, N, K, R, ...){
   nu <- model_dynamics$nu
   sigma <- unlist(sigma_x_params[1])
   theta <- unlist(mu_x_params[2]); kappa <- unlist(mu_x_params[1])
-  var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.15)), length = N)^2
+  var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.05)), length = N)^2
   j_nums <- seq(from = 0, to = R, by = 1)
   jump_mid_points <- seq(from = 0.000001, to = (3 + log(K)) * sqrt(R) * nu, length = K)
   
@@ -36,7 +36,7 @@ gridMaker.Bates <- function(model_dynamics, N, K, R, ...){
   sigma <- unlist(sigma_x_params[1])
   theta <- unlist(mu_x_params[2]); kappa <- unlist(mu_x_params[1])
   
-  var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.15)), length = N)^2
+  var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.05)), length = N)^2
   j_nums <- seq(from = 0, to = R, by = 1)
   jump_mid_points <- 0
   
@@ -50,7 +50,7 @@ gridMaker.Heston <- function(model_dynamics, N, K, R, ...){
   sigma_x_params <- model_dynamics$sigma_x_params
   sigma <- unlist(sigma_x_params[1])
   theta <- unlist(mu_x_params[2]); kappa <- unlist(mu_x_params[1])
-  var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.15)), length = N)^2
+  var_mid_points <- seq(from = sqrt(max(theta - (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa), 0.0000001)), to = max(sqrt(theta + (3 + log(N)) * sqrt(0.5 * theta * sigma^2 / kappa)), sqrt(0.05)), length = N)^2
   j_nums <- 0
   jump_mid_points <- 0
   return(list(var_mid_points = var_mid_points, j_nums = j_nums, jump_mid_points = jump_mid_points))

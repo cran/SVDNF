@@ -273,7 +273,7 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, par = NULL, factors = NULL, tol
         dynamics$nu <- params[1]
         params <- params[-1]
       }
-      if(jump_params_list != 'dummy'){
+      if(any(jump_params_list != 'dummy')){
         dynamics$jump_params <- as.list(params)
       }
     }
@@ -336,7 +336,7 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, par = NULL, factors = NULL, tol
     cat("No initial parameters given. \n")
     cat("Obtaining initial guess for starting parameters... \n")
     par <- initGuess(dynamics, data, factors, N, K, R, grids)
-    cat("Intial par vector is: \n")
+    cat("Initial par vector is: \n")
     cat(par)
   }
   optimResults <- optim(fn = MLE_f, par = par, ...)
@@ -563,7 +563,7 @@ DNFOptim.dynamicsSVM <- function(dynamics, data, par = NULL, factors = NULL, tol
       dynamics$nu <- params[1]
       params <- params[-1]
     }
-    if(jump_params_list != 'dummy'){
+    if(any(jump_params_list != 'dummy')){
       dynamics$jump_params <- as.list(params)
     }
   }

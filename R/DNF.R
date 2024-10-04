@@ -30,16 +30,13 @@ DNF.dynamicsSVM <- function(dynamics, data, factors = NULL, N = 50, K = 20, R = 
   T <- length(ret)
   
   if(!is.null(factors)){
-    if(T == nrow(factors)){
-      factors <- t(factors)
-    }
-    if(T != ncol(factors)){
+    if(T != nrow(factors)){
       # Check that factors has the correct dimensions.
-      stop("Your factor matrix has incorrect dimensions. Verify that either its rows or columns match the length or your returns data.")
+      stop("Your factor matrix has incorrect dimensions. Verify that either its number of rows match the length or your returns data.")
     }
     
-    ret <- ret - t(as.matrix(dynamics$coefs)) %*% factors
-  }
+    ret <- ret - t(factors %*% as.matrix(dynamics$coefs))
+    }
 
   likelihoods <- seq(from = 0, to = 0, length = T)
   log_likelihood <- 0
@@ -105,13 +102,13 @@ factorsModelsCheck <- function(coefs, factors, data){
     }
   }
   # Number of coefs matches number of explanatory
-  if(length(coefs) != nrow(factors)){
-    stop("The number of regression coefficients does not match the number of factors passed the DNF function (check nrows(factors) and the length of your coefficient vectors, coefs in the dynamics object.)")
+  if(length(coefs) != ncol(factors)){
+    stop("The number of regression coefficients does not match the number of factors passed the DNF function (check ncol(factors) and the length of your coefficient vectors, coefs in the dynamics object.)")
   }
   
   # Length of returns series matches length of explanatory variables.
-  if(length(data)!= ncol(factors)){
-    stop("The length of the returns series does not match the number of columns in the factors matrix.")
+  if(length(data)!= nrow(factors)){
+    stop("The length of the returns series does not match the number of rows in the factors matrix.")
   }
 }
 

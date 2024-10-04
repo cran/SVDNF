@@ -9,14 +9,7 @@ initGuess.dynamicsSVM <- function(dynamics, data, factors = NULL, N = 50, K = 20
   # Extract returns if xts object.
   if(is.xts(data)){
     # Extract returns to run DNF with
-    ret <- coredata(data)
-    # Transform column vector of returns into row vectors
-    if(nrow(ret) > 1){
-      ret <- t(ret)
-      if(nrow(ret) > 1){
-        stop("You should pass a vector of returns (i.e., 1xT or Tx1 dimension vetor).")
-      }
-    }
+    ret <- as.vector(coredata(data))
   }else{
     ret <- data
   }
@@ -73,9 +66,9 @@ initGuess.dynamicsSVM <- function(dynamics, data, factors = NULL, N = 50, K = 20
     h <- dynamics$h
     theta <- var(ret)/h
     mu <- mean(ret)/h
-    vol_df <- data.frame(y = (X_t - X_tmin1) / h, X = X_tmin1 /h)
+    vol_df <- data.frame(y = X_t, X = X_tmin1 )
     lin_reg <- lm(y ~ X, vol_df)
-    kappa <- -(lin_reg$coefficients[2] / h)
+    kappa <- (1 - lin_reg$coefficients[2]) / h
     sigma <- summary(lin_reg)$sigma / (sqrt(theta * h))
     # Estimate rho
     epsilon_y <- (ret - mean(ret)) / sqrt(X_t * h)
@@ -89,7 +82,7 @@ initGuess.dynamicsSVM <- function(dynamics, data, factors = NULL, N = 50, K = 20
     dynamics <- dynamicsSVM(model = model, mu = mu, kappa = kappa, theta = theta, sigma = sigma, rho = rho, h = h)
     }
   # Run initial DNF
-  init_DNF <- DNF(data = ret, dynamics = dynamics, factors = factors, N = N, K = K, R = R, grids = grids)
+  init_DNF <- DNF(data = ret, dynamics = dynamics, factors = factors, N = N, K = K, R = R)
   # init while loop
   i <- 1
   # Store likelihoods to check for improvements
@@ -121,9 +114,9 @@ initGuess.dynamicsSVM <- function(dynamics, data, factors = NULL, N = 50, K = 20
   }
   
   if(any(model %in% c("Heston", "Bates", "DuffiePanSingleton"))){
-    vol_df <- data.frame(y = (X_t - X_tmin1), X = X_tmin1)
+    vol_df <- data.frame(y = X_t, X = X_tmin1)
     lin_reg <- lm(y ~ X, vol_df)
-    kappa <- -(lin_reg$coefficients[2] / h)
+    kappa <- (1 - lin_reg$coefficients[2]) / h
     sigma <- summary(lin_reg)$sigma / (sqrt(theta * h))
     # Estimate rho
     epsilon_y <- (ret - mean(ret)) / sqrt(X_t * h)
@@ -172,7 +165,7 @@ initGuess.dynamicsSVM <- function(dynamics, data, factors = NULL, N = 50, K = 20
       
     }
     if(model == "DuffiePanSingleton"){ 
-      mean_vol <- X_tmin1+h*kappa*(theta-X_tmin1)
+      mean_vol <- X_tmin1 + h * kappa * (theta - X_tmin1)
       nu <- max(mean((X_t -  mean_vol)[outliers_ind]),0.005) 
       par <- c(par[1:3], 0, nu, par[4:8])
       dynamics <- dynamicsSVM(model = model, mu = mu, kappa = kappa, theta = theta, sigma = sigma, rho = rho, h = h, alpha = alpha, delta = delta, omega = omega, nu = nu)
@@ -212,13 +205,9 @@ initGuess.dynamicsSVM <- function(dynamics, data, factors = NULL, N = 50, K = 20
    }
    
    if(any(model %in% c("Heston", "Bates", "DuffiePanSingleton"))){
-     vol_df <- data.frame(y = (X_t - X_tmin1), X = X_tmin1)
+     vol_df <- data.frame(y = X_t, X = X_tmin1)
      lin_reg <- lm(y ~ X, vol_df)
-     
-     
-     
-     
-     kappa <- -(lin_reg$coefficients[2] / h)
+     kappa <- (1 - lin_reg$coefficients[2]) / h
      sigma <- summary(lin_reg)$sigma / (sqrt(theta * h))
      # Estimate rho
      epsilon_y <- (ret - mean(ret)) / sqrt(X_t * h)

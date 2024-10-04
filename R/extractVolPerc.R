@@ -71,7 +71,7 @@ extractVolPerc.SVDNF<- function(x, p = 0.5, pred = F, ...) {
   per_vec <- c()
   T <- ncol(CDF)
   N <- nrow(CDF)
-  
+  p <- 1 - p
   for (i in (1:T)) {
     per_vec <- c(per_vec, var_mid_points[N - which((CDF[, i]) > p)[1] + 1])
   }

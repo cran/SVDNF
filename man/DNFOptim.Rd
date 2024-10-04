@@ -38,7 +38,9 @@ For the \code{PittMalikDoucet} model, the parameters should be in the following 
 
 For the \code{DuffiePanSingleton} model, the parameters should be in the following order: \code{mu}, \code{alpha}, \code{delta}, \code{rho_z}, \code{nu}, \code{omega}, \code{kappa}, \code{theta}, \code{sigma}, and \code{rho}.
 
-All other built-in models can be seen as being nested within these two  models (i.e., \code{Heston} and \code{Bates} models are nested in the \code{DuffiePanSingleton} model, while \code{Taylor} and \cr \code{TaylorWithLeverage} are nested in the \code{PittMalikDoucet} model). Their parameters should be passed in the same order as those in the more general models, minus the parameters not found in these nested models.
+For the \code{CAPM_SV} model, the parameters should be in the following order: \code{c_0}, \code{c_1}, \code{phi}, \code{theta}, and \code{sigma}.
+
+All other built-in models can be seen as being nested within these models (i.e., \code{Heston} and \code{Bates} models are nested in the \code{DuffiePanSingleton} model, while \code{Taylor} and \cr \code{TaylorWithLeverage} are nested in the \code{PittMalikDoucet} model). Their parameters should be passed in the same order as those in the more general models, minus the parameters not found in these nested models.
 
 For example, the \code{Taylor} model contains neither jumps nor correlation between volatility and returns innovations. Thus, its three parameters are passed in the order: \code{phi}, \code{theta}, and \code{sigma}.
 
