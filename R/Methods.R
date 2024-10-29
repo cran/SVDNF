@@ -138,14 +138,14 @@ plot.SVDNF <- function(x, lower_p = 0.05, upper_p = 0.95,
   plot(y = p_medians_pred[tlim], x = x_axis,
        main = "Plot of Prediction Distribution Percentiles", 
        type = type, ...)
-  points(p_upper_pred[tlim], x = x_axis, type = "l", col = "grey", lty = 2)
-  points(p_lower_pred[tlim], x = x_axis, type = "l", col = "grey", lty = 2)
+  points(p_upper_pred[tlim], x = x_axis, type = "l", col = "grey", lty = 1)
+  points(p_lower_pred[tlim], x = x_axis, type = "l", col = "grey", lty = 1)
   
   # Plot the median filtering distribution and add the lower/upper percentiles
   plot(y = p_medians[tlim], x = x_axis, type = type, 
        main = "Plot of Filtering Distribution Percentiles", ...)
-  points(p_upper[tlim], x = x_axis, type = "l", col = "grey", lty = 2)
-  points(p_lower[tlim], x = x_axis, type = "l", col = "grey", lty = 2)
+  points(p_upper[tlim], x = x_axis, type = "l", col = "grey", lty = 1)
+  points(p_lower[tlim], x = x_axis, type = "l", col = "grey", lty = 1)
   }
 }
 

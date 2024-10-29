@@ -1,8 +1,8 @@
-3a6332e27ef6b7c558c48d40706fff2c *DESCRIPTION
+4892656992468fbd75c57d23c28b8831 *DESCRIPTION
 0ad8ad5b1cef78c521ca9aa2fba38ef0 *NAMESPACE
 5b388fde0ab52ebf198ac5d1c72f6e17 *R/DNF.R
 07b84a1abc69462390ba829dbeb3a6f8 *R/DNFOptim.R
-70541bf4ad2d58dabde249264b93f5b6 *R/Methods.R
+0a0394f10d5158546849a09a062bb44c *R/Methods.R
 d48a7cc560eecc4550a0c5abae0baaec *R/RcppExports.R
 a60d0aff842101f2c806483711ce9b79 *R/dynamicsSVM.R
 e512d4d8dc45469f117060c161396b80 *R/extractVolPerc.R
@@ -12,7 +12,7 @@ bf9aa19516580df0b7300fb2e11656d8 *R/initGuess.R
 c177daeb1bc144f519a0554da8959727 *R/pars.R
 b6b67ee59927d8cf240a4db6c11e9352 *R/probCalculator.R
 efb5f25aed00b4a393a1c442fdd0519b *build/vignette.rds
-7121b3e596bd7696acc37d9b0fb3b00e *inst/doc/vignette.pdf
+10371ca596e41519c3d015372cdb3cdc *inst/doc/vignette.pdf
 ed4032c772b789407aa8eda4a080d585 *inst/doc/vignette.pdf.asis
 9e735ee8c517cbda6e4b70c32ce1c348 *man/DNF.dynamicsSVM.Rd
 798488a5fe29706c4e6a67a575cd8511 *man/DNFOptim.Rd
